@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Helper</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">SH</span>
+      <span class="brand-name">Study Helper</span>
+    </div>
+    <div class="topbar-status" id="statusLine">Source-preserving study workspace</div>
+    <nav class="topbar-actions">
+      <button class="btn btn-ghost" id="btnCalibration">Confidence check</button>
+      <button class="btn btn-ghost" id="btnReview">Review queue</button>
+      <button class="btn btn-ghost" id="btnDoubts">Doubt notebook</button>
+    </nav>
+  </header>
+
+  <main class="workspace">
+
+    <!-- Empty state / upload -->
+    <section class="upload-stage" id="uploadStage">
+      <div class="upload-hero">
+        <p class="eyebrow">Alibaba AI Hackathon — Education track</p>
+        <h1>Read. Question. Resolve.<br>Without leaving the page.</h1>
+        <p class="hero-sub">Upload a lecture PDF. Right-click any word or passage for one grounded
+          answer — with an Urdu translation — instead of an open-ended chat window.</p>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept="application/pdf,image/*" hidden />
+          <span class="dropzone-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><path d="M24 6v26M24 6l-9 9M24 6l9 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 32v6a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </span>
+          <span class="dropzone-label">Drop a PDF here, or click to browse</span>
+          <span class="dropzone-sub">PDF preferred · images accepted for original view</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Reader + tools, shown once a document is loaded -->
+    <section class="reader-stage hidden" id="readerStage">
+
+      <div class="reader-pane">
+        <div class="reader-toolbar">
+          <div class="doc-title" id="docTitle">—</div>
+          <div class="reader-tabs">
+            <button class="tab active" data-mode="original">Original layout</button>
+            <button class="tab" data-mode="text">Study text</button>
+          </div>
+          <div class="zoom-controls" id="zoomControls">
+            <button id="zoomOut" aria-label="Zoom out">&minus;</button>
+            <span id="zoomLabel">100%</span>
+            <button id="zoomIn" aria-label="Zoom in">+</button>
+            <button id="zoomReset" class="zoom-reset" aria-label="Reset zoom">Reset</button>
+          </div>
+        </div>
+
+        <div class="pdf-scroll" id="pdfScroll">
+          <div id="pdfPages" class="pdf-pages"></div>
+          <div id="textView" class="text-view hidden"></div>
+        </div>
+      </div>
+
+      <aside class="tools-pane">
+        <div class="tools-tabs">
+          <button class="tools-tab active" data-panel="terms">Key terms</button>
+          <button class="tools-tab" data-panel="quiz">Quiz</button>
+        </div>
+
+        <div class="tools-panel" id="panelTerms">
+          <button class="btn btn-primary btn-block" id="btnKeyTerms">Extract key terms</button>
+          <ul class="term-list" id="termList"></ul>
+        </div>
+
+        <div class="tools-panel hidden" id="panelQuiz">
+          <button class="btn btn-primary btn-block" id="btnGenQuiz">Generate 5-question quiz</button>
+          <div id="quizSummaryArea"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Full-screen distraction-free quiz — source material is hidden while
+       taking the quiz so the answer isn't just sitting visible next to it. -->
+  <div class="quiz-overlay hidden" id="quizOverlay">
+    <div class="quiz-overlay-header">
+      <div class="quiz-overlay-title">Quiz</div>
+      <div class="quiz-progress-track">
+        <div class="quiz-progress-fill" id="quizProgressFill"></div>
+      </div>
+      <div class="quiz-progress-label" id="quizProgressLabel">1 / 5</div>
+      <button class="drawer-close" id="quizOverlayClose" aria-label="Close quiz">&times;</button>
+    </div>
+    <div class="quiz-overlay-body" id="quizOverlayBody"></div>
+  </div>
+
+  <!-- Context menu on right-click -->
+  <div class="context-menu hidden" id="contextMenu">
+    <button data-action="define">Define</button>
+    <button data-action="summarize" id="ctxSummarize">Summarize</button>
+    <button data-action="translate">Translate to Urdu</button>
+    <button data-action="doubt">Save as doubt</button>
+  </div>
+
+  <!-- Floating result card -->
+  <div class="assist-card hidden" id="assistCard">
+    <button class="assist-close" id="assistClose" aria-label="Close">&times;</button>
+    <div class="assist-body" id="assistBody"></div>
+  </div>
+
+  <!-- Doubt notebook drawer -->
+  <div class="drawer hidden" id="doubtDrawer">
+    <div class="drawer-header">
+      <h2>Doubt notebook</h2>
+      <button class="drawer-close" data-close-drawer>&times;</button>
+    </div>
+    <div class="drawer-body" id="doubtList"></div>
+  </div>
+
+  <!-- Review queue drawer -->
+  <div class="drawer hidden" id="reviewDrawer">
+    <div class="drawer-header">
+      <h2>Review queue</h2>
+      <button class="drawer-close" data-close-drawer>&times;</button>
+    </div>
+    <div class="drawer-body" id="reviewList"></div>
+  </div>
+
+  <!-- Confidence calibration drawer -->
+  <div class="drawer hidden" id="calibrationDrawer">
+    <div class="drawer-header">
+      <h2>Confidence check</h2>
+      <button class="drawer-close" data-close-drawer>&times;</button>
+    </div>
+    <div class="drawer-body" id="calibrationBody"></div>
+  </div>
+
+  <div class="scrim hidden" id="scrim"></div>
+
+  <!-- Save-doubt mini modal -->
+  <div class="modal hidden" id="doubtModal">
+    <div class="modal-card">
+      <h3>Save this to your doubt notebook</h3>
+      <p class="modal-passage" id="doubtModalPassage"></p>
+      <textarea id="doubtNote" placeholder="Optional note — what's unclear?"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="doubtCancel">Cancel</button>
+        <button class="btn btn-primary" id="doubtSave">Save doubt</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
