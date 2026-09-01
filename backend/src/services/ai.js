@@ -23,7 +23,7 @@ function apiKey() {
  * imageData (optional): { mimeType, data (base64) } — sent as an inline vision
  * part alongside the text prompt, for OCR / image transcription calls.
  */
-async function callGemini(model, { systemInstruction, prompt, jsonMode = false, imageData = null }) {
+async function callGemini(model, { systemInstruction, prompt, jsonMode = false, imageData = null, maxOutputTokens = 2048 }) {
   const url = `${API_BASE}/${model}:generateContent?key=${apiKey()}`;
 
   const parts = imageData
@@ -35,7 +35,10 @@ async function callGemini(model, { systemInstruction, prompt, jsonMode = false, 
     generationConfig: {
       // Gemini 3.x docs recommend NOT overriding temperature/top_p/top_k — its
       // reasoning is tuned for the defaults, so we no longer set temperature here.
-      maxOutputTokens: 2048,
+      // Callers that expect large structured payloads (quiz, OCR) raise this so
+      // the JSON isn't truncated mid-array (which used to surface as a cryptic
+      // "Expected ',' or ']'" parse error).
+      maxOutputTokens,
       ...(jsonMode ? { responseMimeType: "application/json" } : {}),
     },
   };
@@ -106,10 +109,48 @@ function parseJsonLoose(text) {
     const arrMatch = cleaned.match(/\[[\s\S]*\]/);
     const candidate = objMatch?.[0] ?? arrMatch?.[0];
     if (candidate) {
-      return JSON.parse(candidate);
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        // The block is usually truncated mid-array (hit maxOutputTokens). Try to
+        // close any unterminated string + open brackets and re-parse; incomplete
+        // trailing items are filtered out by the callers' shape validation.
+        try {
+          return JSON.parse(closeOpenBrackets(candidate));
+        } catch {
+          // fall through to the friendly error below
+        }
+      }
     }
     throw new Error("Could not parse structured JSON from Gemini response.");
   }
+}
+
+/**
+ * Best-effort repair of truncated JSON: close an unterminated string literal and
+ * append the closers for any still-open objects/arrays, respecting string content.
+ */
+function closeOpenBrackets(str) {
+  const stack = [];
+  let inStr = false;
+  let esc = false;
+  for (const ch of str) {
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{") stack.push("}");
+    else if (ch === "[") stack.push("]");
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  let out = str;
+  if (inStr) out += '"';
+  // Drop a dangling trailing comma / partial key before closing.
+  out = out.replace(/,\s*$/, "");
+  return out + stack.reverse().join("");
 }
 
 // ---------------------------------------------------------------------------
@@ -205,7 +246,8 @@ MATERIAL:
 
   // Quiz generation asks for more output tokens than other calls, so give it
   // more time before giving up — 30s was too tight for a 5-question JSON payload.
-  const raw = await withFallback(model, fallback, { prompt, jsonMode: true }, 45000);
+  // A larger token budget also prevents the JSON being truncated mid-array.
+  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 8192 }, 45000);
   const parsed = parseJsonLoose(raw);
   const questions = parsed.questions ?? [];
 
@@ -245,7 +287,7 @@ Return ONLY JSON: {"question": "...", "options": ["...","...","...","..."], "cor
 MATERIAL:
 """${sourceText.slice(0, 8000)}"""`;
 
-  const raw = await withFallback(model, fallback, { prompt, jsonMode: true }, 45000);
+  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 4096 }, 45000);
   const parsed = parseJsonLoose(raw);
 
   if (
@@ -288,7 +330,7 @@ Rules:
   const raw = await withFallback(
     model,
     fallback,
-    { prompt, imageData: { mimeType, data: base64Data }, jsonMode: true },
+    { prompt, imageData: { mimeType, data: base64Data }, jsonMode: true, maxOutputTokens: 8192 },
     45000
   );
 

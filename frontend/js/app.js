@@ -254,6 +254,10 @@ async function renderAllPages() {
   pagesEl.innerHTML = "";
   const effectiveScale = baseScale * state.zoom;
 
+  // Render at the display's pixel ratio so pages stay crisp on high-DPI
+  // screens; the canvas is scaled back down via CSS to the viewport size.
+  const outputScale = window.devicePixelRatio || 1;
+
   for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: effectiveScale });
@@ -264,8 +268,10 @@ async function renderAllPages() {
     wrap.style.height = `${viewport.height}px`;
 
     const canvas = document.createElement("canvas");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = Math.floor(viewport.width * outputScale);
+    canvas.height = Math.floor(viewport.height * outputScale);
+    canvas.style.width = `${viewport.width}px`;
+    canvas.style.height = `${viewport.height}px`;
     const ctx = canvas.getContext("2d");
     wrap.appendChild(canvas);
 
@@ -277,7 +283,8 @@ async function renderAllPages() {
 
     pagesEl.appendChild(wrap);
 
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
+    await page.render({ canvasContext: ctx, viewport, transform }).promise;
 
     const textContent = await page.getTextContent();
     buildWordLayer(textLayer, textContent, viewport);
@@ -288,7 +295,15 @@ function setZoom(next) {
   state.zoom = Math.min(Math.max(next, ZOOM_MIN), ZOOM_MAX);
   $("#zoomLabel").textContent = `${Math.round(state.zoom * 100)}%`;
   closeAssistCard();
-  if (pdfDoc) renderAllPages();
+  if (pdfDoc) {
+    // Keep the reader's vertical position stable across the re-render so a
+    // zoom change doesn't throw the student back to the top of the document.
+    const scrollEl = $("#pdfScroll");
+    const ratio = scrollEl.scrollHeight > 0 ? scrollEl.scrollTop / scrollEl.scrollHeight : 0;
+    renderAllPages().then(() => {
+      scrollEl.scrollTop = ratio * scrollEl.scrollHeight;
+    });
+  }
 }
 
 $("#zoomIn")?.addEventListener("click", () => setZoom(state.zoom + ZOOM_STEP));

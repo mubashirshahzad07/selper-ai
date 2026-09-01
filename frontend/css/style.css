@@ -154,6 +154,10 @@ button { font-family: inherit; cursor: pointer; }
   border-right: 1px solid var(--hairline);
   display: flex; flex-direction: column;
   min-height: 0; /* let this flex child actually shrink instead of overflowing */
+  /* Keep the 1fr grid track from stretching to fit zoomed pages — without this
+     a wide page would push the tools pane off-screen. The pages scroll inside
+     .pdf-scroll instead of growing the layout. */
+  min-width: 0;
 }
 .reader-toolbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -187,8 +191,12 @@ button { font-family: inherit; cursor: pointer; }
 .zoom-controls .zoom-reset { width: auto; padding: 0 10px; font-size: 11.5px; font-weight: 500; }
 #zoomLabel { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); width: 40px; text-align: center; }
 
-.pdf-scroll { flex: 1; overflow-y: auto; padding: 28px; display: flex; justify-content: center; }
-.pdf-pages { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+/* Self-contained scroll container: it owns both scroll axes so zoomed pages
+   never leak into or distort the surrounding grid/flex layout. Centering is
+   done with auto margins on .pdf-pages (not justify-content here) so an
+   over-wide page stays reachable by scrolling instead of being clipped. */
+.pdf-scroll { flex: 1; min-height: 0; overflow: auto; padding: 28px; display: flex; }
+.pdf-pages { margin: auto; display: flex; flex-direction: column; gap: 20px; align-items: center; }
 .pdf-pages canvas { box-shadow: 0 4px 24px -8px rgba(0,0,0,.15); border-radius: 2px; }
 .pdf-page-wrap { position: relative; }
 .pdf-text-layer {
