@@ -15,6 +15,7 @@
     </div>
     <div class="topbar-status" id="statusLine">Source-preserving study workspace</div>
     <nav class="topbar-actions">
+      <button class="btn btn-ghost" id="btnDashboard">Learning overview</button>
       <button class="btn btn-ghost" id="btnCalibration">Confidence check</button>
       <button class="btn btn-ghost" id="btnReview">Review queue</button>
       <button class="btn btn-ghost" id="btnDoubts">Doubt notebook</button>
@@ -137,6 +138,15 @@
       <button class="drawer-close" data-close-drawer>&times;</button>
     </div>
     <div class="drawer-body" id="calibrationBody"></div>
+  </div>
+
+  <!-- Dashboard drawer — learning gaps, confidence matrix, improvement progress -->
+  <div class="drawer hidden" id="dashboardDrawer">
+    <div class="drawer-header">
+      <h2>Learning overview</h2>
+      <button class="drawer-close" data-close-drawer>&times;</button>
+    </div>
+    <div class="drawer-body" id="dashboardBody"></div>
   </div>
 
   <div class="scrim hidden" id="scrim"></div>

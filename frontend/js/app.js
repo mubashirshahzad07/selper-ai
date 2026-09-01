@@ -95,6 +95,12 @@ async function handleUpload(file) {
     const full = await api(`/api/documents/${doc.id}`).then((r) => r.json());
     state.extractedText = full.extractedText || "";
     $("#textView").textContent = state.extractedText || "(No extractable text found in this PDF.)";
+
+    // Scanned PDFs carry per-page OCR word boxes (object keyed by page number),
+    // unlike images (flat array). Apply them to pages that have no native text.
+    state.pdfOcr = full.ocrData && !Array.isArray(full.ocrData) ? full.ocrData : null;
+    if (state.pdfOcr) applyPdfOcrLayers();
+    maybeLoadScannedOcr(doc.id);
   } else {
     // Images go through OCR (Gemini vision) server-side — pull the transcribed
     // text the same way PDFs do, so key terms/quiz/define all work on photos
@@ -219,21 +225,7 @@ function renderImageWithOcr(url, ocrData) {
   const layer = document.createElement("div");
   layer.className = "image-text-layer";
 
-  if (Array.isArray(ocrData)) {
-    for (const w of ocrData) {
-      if (!w || !w.text) continue;
-      const b = w.bbox || {};
-      const span = document.createElement("span");
-      span.textContent = w.text;
-      span.dataset.word = w.text.replace(/[^\w'-]/g, "");
-      span.style.left = `${(Number(b.x) || 0) * 100}%`;
-      span.style.top = `${(Number(b.y) || 0) * 100}%`;
-      span.style.width = `${(Number(b.w) || 0) * 100}%`;
-      span.style.height = `${(Number(b.h) || 0) * 100}%`;
-      span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, null));
-      layer.appendChild(span);
-    }
-  }
+  if (Array.isArray(ocrData)) appendOcrSpans(layer, ocrData);
 
   // Prevent the browser's default image/page context menu on empty areas of
   // the text layer. Word spans handle their own contextmenu. If OCR produced
@@ -247,6 +239,77 @@ function renderImageWithOcr(url, ocrData) {
 
   wrap.appendChild(layer);
   pagesEl.appendChild(wrap);
+}
+
+/**
+ * Append one absolutely-positioned, invisible span per OCR word into a text
+ * layer. Positions are percentages of the layer box, so the same helper works
+ * for image layers and per-page PDF layers. Shared with the scanned-PDF flow.
+ */
+function appendOcrSpans(layerEl, words) {
+  for (const w of words) {
+    if (!w || !w.text) continue;
+    const b = w.bbox || {};
+    const span = document.createElement("span");
+    span.textContent = w.text;
+    span.dataset.word = w.text.replace(/[^\w'-]/g, "");
+    span.style.left = `${(Number(b.x) || 0) * 100}%`;
+    span.style.top = `${(Number(b.y) || 0) * 100}%`;
+    span.style.width = `${(Number(b.w) || 0) * 100}%`;
+    span.style.height = `${(Number(b.h) || 0) * 100}%`;
+    span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, null));
+    layerEl.appendChild(span);
+  }
+}
+
+/**
+ * Attach the server's per-page OCR word boxes to the rendered pages. Handles two
+ * cases: fully-scanned pages (empty native layer -> full-page words) and mixed
+ * pages (native text present -> only the embedded-image words are added on top).
+ * Each page's words are already normalised to the page, so they drop straight in.
+ * A dataset flag prevents double-applying on re-poll / re-render.
+ */
+function applyPdfOcrLayers() {
+  if (!state.pdfOcr) return 0;
+  let added = 0;
+  for (const wrap of document.querySelectorAll(".pdf-page-wrap")) {
+    if (wrap.dataset.ocrApplied) continue;
+    const page = Number(wrap.dataset.page);
+    const layer = wrap.querySelector(".pdf-text-layer");
+    if (!layer) continue;
+    const words = state.pdfOcr?.[page]?.words;
+    if (Array.isArray(words) && words.length > 0) {
+      appendOcrSpans(layer, words);
+      added++;
+    }
+    wrap.dataset.ocrApplied = "1";
+  }
+  return added;
+}
+
+/**
+ * The server analyses/OCRs PDF pages in the background after the upload response,
+ * so ocrData may not exist on first fetch. Poll a few times and apply the per-page
+ * word layers once they arrive. Runs for every PDF (mixed or scanned); pure-text
+ * PDFs simply return an empty ocrData object and nothing is applied.
+ */
+async function maybeLoadScannedOcr(docId) {
+  for (let i = 0; i < 8; i++) {
+    await new Promise((r) => setTimeout(r, 2500));
+    const full = await api(`/api/documents/${docId}`).then((r) => r.json()).catch(() => null);
+    if (!full) continue;
+    const ocr = full.ocrData && !Array.isArray(full.ocrData) ? full.ocrData : null;
+    if (ocr && Object.keys(ocr).length > 0) {
+      state.pdfOcr = ocr;
+      if (full.extractedText) {
+        state.extractedText = full.extractedText;
+        $("#textView").textContent = full.extractedText;
+      }
+      const added = applyPdfOcrLayers();
+      if (added > 0) setStatus(`${state.filename} · OCR text ready · right-click any word`);
+      return;
+    }
+  }
 }
 
 async function renderAllPages() {
@@ -264,6 +327,7 @@ async function renderAllPages() {
 
     const wrap = document.createElement("div");
     wrap.className = "pdf-page-wrap";
+    wrap.dataset.page = pageNum;
     wrap.style.width = `${viewport.width}px`;
     wrap.style.height = `${viewport.height}px`;
 
@@ -289,6 +353,10 @@ async function renderAllPages() {
     const textContent = await page.getTextContent();
     buildWordLayer(textLayer, textContent, viewport);
   }
+
+  // Re-attach any server OCR word layers (scanned pages / embedded image blocks)
+  // that were lost when the pages were rebuilt (e.g. on zoom).
+  applyPdfOcrLayers();
 }
 
 function setZoom(next) {
@@ -782,6 +850,108 @@ function renderCalibration(data) {
   `;
 }
 
+// ---------------------------------------------------------------- dashboard — learning overview
+$("#btnDashboard").addEventListener("click", async () => {
+  const data = await api("/api/dashboard").then((r) => r.json());
+  $("#dashboardBody").innerHTML = renderDashboard(data);
+  openDrawer($("#dashboardDrawer"));
+});
+
+function renderDashboard(data) {
+  const { weakTopics, confidenceMatrix, improvement, reviewSummary } = data;
+
+  // Weak topic clusters
+  const topicsHtml = weakTopics.length
+    ? weakTopics.map((t) => `
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-badge priority-${t.priority}">${t.label}</span>
+            <span class="dash-count">${t.count} miss${t.count === 1 ? "" : "es"}</span>
+          </div>
+          <div class="dash-samples">
+            ${t.samples.slice(0, 2).map((s) => `<div class="dash-sample">${escapeHtml(s.question.slice(0, 120))}${s.question.length > 120 ? "…" : ""}</div>`).join("")}
+          </div>
+        </div>
+      `).join("")
+    : `<div class="empty-note">No weaknesses detected yet. Take a quiz to get started.</div>`;
+
+  // Confidence vs accuracy matrix
+  const cm = confidenceMatrix.overall;
+  const confBars = ["confident", "unsure", "guessing"].map((level) => {
+    const b = cm.byConfidence[level];
+    const widthPct = b.accuracy === null ? 0 : Math.round(b.accuracy * 100);
+    return `
+      <div class="calibration-row">
+        <div class="calibration-row-label">
+          <span class="calibration-level">${level}</span>
+          <span class="calibration-count">${b.total} answered</span>
+        </div>
+        <div class="calibration-bar-track">
+          <div class="calibration-bar-fill level-${level}" style="width:${widthPct}%"></div>
+        </div>
+        <div class="calibration-bar-pct">${b.accuracy === null ? "—" : `${Math.round(b.accuracy * 100)}%`}</div>
+      </div>`;
+  }).join("");
+
+  // Per-category confident-wrong / guessing-right
+  const catRows = (confidenceMatrix.byCategory || []).filter((c) => c.confidentWrong > 0 || c.guessingRight > 0).map((c) => `
+    <div class="dash-cat-row">
+      <span>${escapeHtml(c.label)}</span>
+      ${c.confidentWrong > 0 ? `<span class="dash-cat-miss">${c.confidentWrong} confident miss${c.confidentWrong === 1 ? "" : "es"}</span>` : ""}
+      ${c.guessingRight > 0 ? `<span class="dash-cat-lucky">${c.guessingRight} lucky guess${c.guessingRight === 1 ? "" : "es"}</span>` : ""}
+    </div>
+  `).join("");
+
+  // Improvement progress
+  const impHtml = improvement.totalFollowUps > 0
+    ? `
+      <div class="dash-imp-row">
+        <div class="dash-imp-stat"><strong>${improvement.improved}</strong> improved</div>
+        <div class="dash-imp-stat"><strong>${improvement.stillStruggling}</strong> still struggling</div>
+        <div class="dash-imp-rate">${improvement.improvementRate === null ? "—" : `${Math.round(improvement.improvementRate * 100)}%`} improvement rate</div>
+      </div>
+    `
+    : `<div class="empty-note">No follow-up attempts yet. Try "Try a similar question" on wrong answers.</div>`;
+
+  // Review queue summary
+  const rs = reviewSummary;
+  const reviewLinks = [
+    { label: "Doubts", count: rs.byType.doubts },
+    { label: "Confident but wrong", count: rs.byType.confidentWrong },
+    { label: "Conceptual errors", count: rs.byType.conceptualErrors },
+    { label: "Careless errors", count: rs.byType.carelessErrors },
+  ].filter((x) => x.count > 0);
+
+  const reviewLinksHtml = reviewLinks.length
+    ? reviewLinks.map((x) => `<a href="#" class="dash-link" onclick="event.preventDefault();document.getElementById('btnReview').click()">${x.label} (${x.count}) →</a>`).join("")
+    : `<div class="empty-note">Nothing in your review queue.</div>`;
+
+  return `
+    <div class="dashboard-section">
+      <h3>Weak topic clusters</h3>
+      ${topicsHtml}
+    </div>
+
+    <div class="dashboard-section">
+      <h3>Confidence vs accuracy</h3>
+      ${cm.totalAnswered > 0 ? `
+        <div class="calibration-bars">${confBars}</div>
+        ${catRows ? `<div class="dash-cat-rows">${catRows}</div>` : ""}
+      ` : `<div class="empty-note">Take a quiz first.</div>`}
+    </div>
+
+    <div class="dashboard-section">
+      <h3>Improvement progress</h3>
+      ${impHtml}
+    </div>
+
+    <div class="dashboard-section">
+      <h3>Review queue · ${rs.totalDue} due now</h3>
+      ${reviewLinksHtml}
+    </div>
+  `;
+}
+
 // ---------------------------------------------------------------- reader tabs
 $$(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -824,23 +994,85 @@ $("#btnKeyTerms").addEventListener("click", async () => {
 // ---------------------------------------------------------------- quiz
 // Distraction-free, full-screen, one-question-at-a-time — the source PDF is
 // never visible during the quiz, so answering it isn't just "read the slide."
-let currentQuiz = null; // { id, questions: [{question, options}] }
+let currentQuiz = null; // { id, questions: [...], mode: 'mcq'|'freeText' }
 let currentQuestionIndex = 0;
 let currentAttempt = null; // set once results come back
-const quizAnswers = new Map(); // questionIndex -> { selectedIndex, confidence }
+const quizAnswers = new Map(); // questionIndex -> { selectedIndex?, text?, confidence }
 
 const quizOverlay = $("#quizOverlay");
 const quizOverlayBody = $("#quizOverlayBody");
 
-$("#btnGenQuiz").addEventListener("click", async () => {
+$("#btnGenQuiz").addEventListener("click", () => {
   if (!state.documentId) return;
-  $("#quizSummaryArea").innerHTML = `<div class="empty-note">Generating a 5-question quiz from this document…</div>`;
+  openQuizConfigModal();
+});
+
+function openQuizConfigModal() {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.id = "quizConfigModal";
+  modal.innerHTML = `
+    <div class="modal-card" style="max-width:480px">
+      <h3>Generate quiz</h3>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Number of questions</label>
+        <select id="quizCountSelect" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:14px">
+          <option value="5" selected>5 questions (standard)</option>
+          <option value="10">10 questions (comprehensive)</option>
+          <option value="15">15 questions (thorough)</option>
+          <option value="20">20 questions (deep dive)</option>
+        </select>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Answer mode</label>
+        <div style="display:flex;gap:8px">
+          <button id="modeMcq" class="btn btn-primary" style="flex:1" data-mode="mcq">Multiple choice</button>
+          <button id="modeFreeText" class="btn btn-ghost" style="flex:1" data-mode="freeText">Write your answer</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="quizConfigCancel">Cancel</button>
+        <button class="btn btn-primary" id="quizConfigStart">Start quiz</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  let selectedMode = "mcq";
+  const mcqBtn = modal.querySelector("#modeMcq");
+  const ftBtn = modal.querySelector("#modeFreeText");
+
+  mcqBtn.addEventListener("click", () => {
+    selectedMode = "mcq";
+    mcqBtn.className = "btn btn-primary";
+    ftBtn.className = "btn btn-ghost";
+  });
+  ftBtn.addEventListener("click", () => {
+    selectedMode = "freeText";
+    ftBtn.className = "btn btn-primary";
+    mcqBtn.className = "btn btn-ghost";
+  });
+
+  modal.querySelector("#quizConfigCancel").addEventListener("click", () => modal.remove());
+  modal.querySelector("#quizConfigStart").addEventListener("click", async () => {
+    const count = Number(modal.querySelector("#quizCountSelect").value);
+    modal.remove();
+    startQuiz(count, selectedMode);
+  });
+}
+
+async function startQuiz(count, mode) {
+  $("#quizSummaryArea").innerHTML = `<div class="empty-note">Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</div>`;
   quizAnswers.clear();
   currentQuestionIndex = 0;
   currentAttempt = null;
 
   try {
-    const res = await api(`/api/documents/${state.documentId}/quiz`, { method: "POST" });
+    const res = await api(`/api/documents/${state.documentId}/quiz`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ count, mode }),
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     currentQuiz = data;
@@ -850,7 +1082,7 @@ $("#btnGenQuiz").addEventListener("click", async () => {
   } catch (err) {
     $("#quizSummaryArea").innerHTML = `<div class="empty-note">${escapeHtml(err.message)}</div>`;
   }
-});
+}
 
 function openQuizOverlay() {
   quizOverlay.classList.remove("hidden");
@@ -873,40 +1105,70 @@ function renderQuizQuestion() {
   updateProgress();
 
   const isLast = currentQuestionIndex === currentQuiz.questions.length - 1;
+  const isFreeText = currentQuiz.mode === "freeText";
 
-  quizOverlayBody.innerHTML = `
-    <div class="quiz-overlay-inner">
-      <div class="quiz-overlay-question">${escapeHtml(q.question)}</div>
-      <div class="quiz-overlay-options">
-        ${q.options.map((opt, oi) => `
-          <button class="quiz-overlay-option${saved.selectedIndex === oi ? " selected" : ""}" data-oi="${oi}">
-            ${escapeHtml(opt)}
-          </button>
-        `).join("")}
-      </div>
-      <div class="quiz-overlay-confidence">
-        <div class="quiz-overlay-confidence-label">How confident are you?</div>
-        <div class="quiz-overlay-confidence-row">
-          ${["confident", "unsure", "guessing"].map((c) => `
-            <button data-conf="${c}" class="${saved.confidence === c ? "selected" : ""}">${c}</button>
-          `).join("")}
+  if (isFreeText) {
+    quizOverlayBody.innerHTML = `
+      <div class="quiz-overlay-inner">
+        <div class="quiz-topic-badge">${escapeHtml(q.topic || "")}</div>
+        <div class="quiz-overlay-question">${escapeHtml(q.question)}</div>
+        <textarea id="freeTextAnswer" placeholder="Type your answer here…" style="width:100%;min-height:120px;padding:12px;border:1px solid var(--hairline);border-radius:var(--radius-md);font-family:inherit;font-size:15px;line-height:1.6;resize:vertical;margin-bottom:20px">${escapeHtml(saved.text || "")}</textarea>
+        <div class="quiz-overlay-confidence">
+          <div class="quiz-overlay-confidence-label">How confident are you?</div>
+          <div class="quiz-overlay-confidence-row">
+            ${["confident", "unsure", "guessing"].map((c) => `
+              <button data-conf="${c}" class="${saved.confidence === c ? "selected" : ""}">${c}</button>
+            `).join("")}
+          </div>
+        </div>
+        <div class="quiz-overlay-nav">
+          <button class="btn btn-ghost" id="quizPrevBtn" ${currentQuestionIndex === 0 ? "disabled" : ""}>Back</button>
+          <button class="btn btn-primary" id="quizNextBtn">${isLast ? "Submit quiz" : "Next"}</button>
         </div>
       </div>
-      <div class="quiz-overlay-nav">
-        <button class="btn btn-ghost" id="quizPrevBtn" ${currentQuestionIndex === 0 ? "disabled" : ""}>Back</button>
-        <button class="btn btn-primary" id="quizNextBtn">${isLast ? "Submit quiz" : "Next"}</button>
-      </div>
-    </div>
-  `;
+    `;
 
-  quizOverlayBody.querySelectorAll(".quiz-overlay-option").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      quizOverlayBody.querySelectorAll(".quiz-overlay-option").forEach((b) => b.classList.remove("selected"));
-      btn.classList.add("selected");
+    const textarea = quizOverlayBody.querySelector("#freeTextAnswer");
+    textarea.addEventListener("input", () => {
       const prev = quizAnswers.get(currentQuestionIndex) || {};
-      quizAnswers.set(currentQuestionIndex, { ...prev, selectedIndex: Number(btn.dataset.oi) });
+      quizAnswers.set(currentQuestionIndex, { ...prev, text: textarea.value });
     });
-  });
+  } else {
+    quizOverlayBody.innerHTML = `
+      <div class="quiz-overlay-inner">
+        <div class="quiz-topic-badge">${escapeHtml(q.topic || "")}</div>
+        <div class="quiz-overlay-question">${escapeHtml(q.question)}</div>
+        <div class="quiz-overlay-options">
+          ${q.options.map((opt, oi) => `
+            <button class="quiz-overlay-option${saved.selectedIndex === oi ? " selected" : ""}" data-oi="${oi}">
+              ${escapeHtml(opt)}
+            </button>
+          `).join("")}
+        </div>
+        <div class="quiz-overlay-confidence">
+          <div class="quiz-overlay-confidence-label">How confident are you?</div>
+          <div class="quiz-overlay-confidence-row">
+            ${["confident", "unsure", "guessing"].map((c) => `
+              <button data-conf="${c}" class="${saved.confidence === c ? "selected" : ""}">${c}</button>
+            `).join("")}
+          </div>
+        </div>
+        <div class="quiz-overlay-nav">
+          <button class="btn btn-ghost" id="quizPrevBtn" ${currentQuestionIndex === 0 ? "disabled" : ""}>Back</button>
+          <button class="btn btn-primary" id="quizNextBtn">${isLast ? "Submit quiz" : "Next"}</button>
+        </div>
+      </div>
+    `;
+
+    quizOverlayBody.querySelectorAll(".quiz-overlay-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        quizOverlayBody.querySelectorAll(".quiz-overlay-option").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        const prev = quizAnswers.get(currentQuestionIndex) || {};
+        quizAnswers.set(currentQuestionIndex, { ...prev, selectedIndex: Number(btn.dataset.oi) });
+      });
+    });
+  }
 
   quizOverlayBody.querySelectorAll(".quiz-overlay-confidence-row button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -917,11 +1179,11 @@ function renderQuizQuestion() {
     });
   });
 
-  $("#quizPrevBtn").addEventListener("click", () => {
+  $("#quizPrevBtn")?.addEventListener("click", () => {
     currentQuestionIndex = Math.max(0, currentQuestionIndex - 1);
     renderQuizQuestion();
   });
-  $("#quizNextBtn").addEventListener("click", () => {
+  $("#quizNextBtn")?.addEventListener("click", () => {
     if (isLast) { submitQuiz(); return; }
     currentQuestionIndex++;
     renderQuizQuestion();
@@ -931,11 +1193,16 @@ function renderQuizQuestion() {
 async function submitQuiz() {
   const responses = currentQuiz.questions.map((_, qi) => {
     const a = quizAnswers.get(qi) || {};
+    if (currentQuiz.mode === "freeText") {
+      return { questionIndex: qi, text: a.text || "", confidence: a.confidence || "unsure" };
+    }
     return { questionIndex: qi, selectedIndex: a.selectedIndex ?? -1, confidence: a.confidence || "unsure" };
   });
 
-  quizOverlayBody.innerHTML = `<div class="empty-note">Grading…</div>`;
   updateProgressComplete();
+
+  // Show a compact, non-blocking grading toast so the user can keep reading.
+  showGradingToast(currentQuiz.questions.length);
 
   const res = await api(`/api/quizzes/${currentQuiz.id}/submit`, {
     method: "POST",
@@ -944,11 +1211,14 @@ async function submitQuiz() {
   });
   const attempt = await res.json();
   if (!res.ok) {
+    hideGradingToast();
     quizOverlayBody.innerHTML = `<div class="empty-note">${escapeHtml(attempt.error)}</div>`;
     return;
   }
   currentAttempt = attempt;
-  renderQuizResults();
+
+  // Update the toast to show grading complete + "View Full Results" button.
+  showGradingCompleteToast(attempt);
 }
 
 function updateProgressComplete() {
@@ -958,26 +1228,49 @@ function updateProgressComplete() {
 
 function renderQuizResults() {
   const attempt = currentAttempt;
+  const isFreeText = attempt.mode === "freeText";
+
   quizOverlayBody.innerHTML = `
     <div class="quiz-overlay-inner quiz-results">
-      <div class="quiz-results-score">${attempt.score} / ${attempt.total}</div>
+      <div class="quiz-results-score">${isFreeText ? `${Math.round(attempt.score * 100)}%` : `${attempt.score} / ${attempt.total}`}</div>
       <div class="quiz-results-sub">Weak items were added to your review queue.</div>
       <div class="quiz-results-list">
-        ${attempt.answers.map((ans, qi) => `
-          <div class="quiz-results-item ${ans.isCorrect ? "right" : "wrong"}" data-qi="${qi}">
-            <div class="qr-q">${qi + 1}. ${escapeHtml(ans.question)}</div>
-            <div class="qr-answer">
-              Your answer: ${escapeHtml(ans.selectedOption || "(skipped)")}
-              ${ans.isCorrect ? "" : ` — correct: ${escapeHtml(ans.correctOption || "")}`}
+        ${attempt.answers.map((ans, qi) => {
+          if (isFreeText) {
+            return `
+              <div class="quiz-results-item ${ans.isCorrect ? "right" : "wrong"}" data-qi="${qi}">
+                <div class="qr-q">${qi + 1}. ${escapeHtml(ans.question)}</div>
+                <div class="qr-topic" style="font-size:11px;color:var(--accent);margin-bottom:6px">${escapeHtml(ans.topic || "")}</div>
+                <div class="qr-answer" style="margin-bottom:8px"><strong>Your answer:</strong><br>${escapeHtml(ans.studentAnswer || "(skipped)")}</div>
+                <div class="qr-answer" style="margin-bottom:8px"><strong>Model answer:</strong><br>${escapeHtml(ans.modelAnswer || "")}</div>
+                <div class="qr-feedback" style="background:var(--paper);padding:10px 12px;border-radius:var(--radius-sm);font-size:13px;line-height:1.5;margin-bottom:8px">${escapeHtml(ans.feedback || "")}</div>
+                <div style="font-size:11px;color:var(--ink-soft)">Score: ${Math.round(ans.score * 100)}%</div>
+                ${!ans.isCorrect ? `
+                  <button class="btn btn-ghost follow-up-trigger" data-qi="${qi}" style="margin-top:10px;font-size:12.5px">
+                    Try a similar question
+                  </button>
+                  <div class="follow-up-area" data-qi="${qi}"></div>
+                ` : ""}
+              </div>
+            `;
+          }
+          return `
+            <div class="quiz-results-item ${ans.isCorrect ? "right" : "wrong"}" data-qi="${qi}">
+              <div class="qr-q">${qi + 1}. ${escapeHtml(ans.question)}</div>
+              <div class="qr-topic" style="font-size:11px;color:var(--accent);margin-bottom:6px">${escapeHtml(ans.topic || "")}</div>
+              <div class="qr-answer">
+                Your answer: ${escapeHtml(ans.selectedOption || "(skipped)")}
+                ${ans.isCorrect ? "" : ` — correct: ${escapeHtml(ans.correctOption || "")}`}
+              </div>
+              ${!ans.isCorrect ? `
+                <button class="btn btn-ghost follow-up-trigger" data-qi="${qi}" style="margin-top:10px;font-size:12.5px">
+                  Try a similar question
+                </button>
+                <div class="follow-up-area" data-qi="${qi}"></div>
+              ` : ""}
             </div>
-            ${!ans.isCorrect ? `
-              <button class="btn btn-ghost follow-up-trigger" data-qi="${qi}" style="margin-top:10px;font-size:12.5px">
-                Try a similar question
-              </button>
-              <div class="follow-up-area" data-qi="${qi}"></div>
-            ` : ""}
-          </div>
-        `).join("")}
+          `;
+        }).join("")}
       </div>
       <div class="quiz-overlay-nav" style="justify-content:center">
         <button class="btn btn-primary" id="quizDoneBtn">Done</button>
@@ -991,11 +1284,51 @@ function renderQuizResults() {
 
   $("#quizDoneBtn").addEventListener("click", () => {
     closeQuizOverlay();
+    const scoreDisplay = isFreeText ? `${Math.round(attempt.score * 100)}%` : `${attempt.score} / ${attempt.total}`;
     $("#quizSummaryArea").innerHTML = `
       <div class="quiz-summary-card">
-        Last attempt: ${attempt.score} / ${attempt.total}. Generate a new quiz to try again.
+        Last attempt: ${scoreDisplay}. Generate a new quiz to try again.
       </div>
     `;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Grading toast — compact, non-blocking notification shown while the backend
+// grades free-text answers sequentially. Lives above the quiz overlay so the
+// user can dismiss the overlay and keep reading while grading proceeds.
+// ---------------------------------------------------------------------------
+let gradingToastEl = null;
+
+function showGradingToast(totalQuestions) {
+  if (gradingToastEl) gradingToastEl.remove();
+  gradingToastEl = document.createElement("div");
+  gradingToastEl.className = "grading-toast";
+  gradingToastEl.innerHTML = `
+    <span class="spinner" style="width:14px;height:14px;border:2px solid var(--hairline);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px"></span>
+    Grading ${totalQuestions} answer${totalQuestions > 1 ? "s" : ""}… You can keep reading.
+  `;
+  document.body.appendChild(gradingToastEl);
+}
+
+function hideGradingToast() {
+  if (gradingToastEl) { gradingToastEl.remove(); gradingToastEl = null; }
+}
+
+function showGradingCompleteToast(attempt) {
+  if (!gradingToastEl) return;
+  const isFreeText = attempt.mode === "freeText";
+  const scoreDisplay = isFreeText ? `${Math.round(attempt.score * 100)}%` : `${attempt.score} / ${attempt.total}`;
+  const correctCount = isFreeText ? attempt.answers.filter((a) => a.isCorrect).length : attempt.score;
+  gradingToastEl.innerHTML = `
+    <div style="font-weight:600;font-size:14px;margin-bottom:4px">Grading complete — ${scoreDisplay}</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px">${correctCount} of ${attempt.total} correct. Weak items added to review queue.</div>
+    <button class="btn btn-primary" id="viewFullResultsBtn" style="width:100%">View Full Results</button>
+  `;
+  gradingToastEl.querySelector("#viewFullResultsBtn").addEventListener("click", () => {
+    hideGradingToast();
+    openQuizOverlay();
+    renderQuizResults();
   });
 }
 

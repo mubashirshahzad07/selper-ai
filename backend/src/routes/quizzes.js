@@ -3,7 +3,7 @@ import express from "express";
 import { nanoid } from "nanoid";
 
 import { db } from "../repositories/store.js";
-import { generateFollowUpQuestion } from "../services/ai.js";
+import { generateFollowUpQuestion, gradeFreeTextAnswer } from "../services/ai.js";
 import { assertOwnership } from "../middleware/session.js";
 import { asyncRoute } from "./asyncRoute.js";
 
@@ -11,7 +11,7 @@ export function quizzesRouter() {
   const router = express.Router();
 
   // ---------------------------------------------------------------------------
-  // Quiz submission: deterministic local grading, no AI call.
+  // Quiz submission: deterministic local grading for MCQ, AI grading for free-text.
   // ---------------------------------------------------------------------------
   router.post(
     "/:id/submit",
@@ -21,29 +21,67 @@ export function quizzesRouter() {
       assertOwnership(quiz, req, "Quiz");
 
       const { responses } = req.body || {};
-      // responses: [{ questionIndex, selectedIndex, confidence: 'confident'|'unsure'|'guessing', errorCategory? }]
       if (!Array.isArray(responses)) {
         return res.status(400).json({ error: "responses array is required." });
       }
 
-      const answers = responses.map((r) => {
-        const q = quiz.questions[r.questionIndex];
-        const isCorrect = q && r.selectedIndex === q.correctIndex;
-        return {
-          questionIndex: r.questionIndex,
-          question: q?.question ?? "(unknown question)",
-          options: q?.options ?? [],
-          selectedOption: q?.options?.[r.selectedIndex] ?? null,
-          correctOption: q?.options?.[q?.correctIndex] ?? null,
-          explanation: q?.explanation ?? "",
-          isCorrect: Boolean(isCorrect),
-          confidence: r.confidence || "unsure",
-          // Errors are self-tagged by the student at submit time (or default to Conceptual).
-          errorCategory: isCorrect ? null : r.errorCategory || "Conceptual",
-        };
-      });
+      const isFreeText = quiz.mode === "freeText";
 
-      const score = answers.filter((a) => a.isCorrect).length;
+      let answers;
+      if (isFreeText) {
+        // Grade each free-text answer via AI — sequentially to respect RPM limits.
+        // Promise.all would fire all calls at once and overwhelm the throttle queue.
+        answers = [];
+        for (const r of responses) {
+          const q = quiz.questions[r.questionIndex];
+          const studentAnswer = r.text || "";
+          let gradeResult = { score: 0, feedback: "No answer provided.", matchedCriteria: [], missedCriteria: [] };
+          if (studentAnswer.trim()) {
+            try {
+              gradeResult = await gradeFreeTextAnswer(studentAnswer, q);
+            } catch (err) {
+              gradeResult.feedback = `Grading failed: ${err.message}`;
+            }
+          }
+          const isCorrect = gradeResult.score >= 0.7; // 70% threshold for "correct"
+          answers.push({
+            questionIndex: r.questionIndex,
+            question: q?.question ?? "(unknown question)",
+            topic: q?.topic ?? "Unknown",
+            studentAnswer,
+            modelAnswer: q?.modelAnswer ?? "",
+            score: gradeResult.score,
+            feedback: gradeResult.feedback,
+            matchedCriteria: gradeResult.matchedCriteria,
+            missedCriteria: gradeResult.missedCriteria,
+            isCorrect,
+            confidence: r.confidence || "unsure",
+            errorCategory: isCorrect ? null : (gradeResult.score >= 0.4 ? "Careless" : "Conceptual"),
+          });
+        }
+      } else {
+        // MCQ mode — deterministic grading.
+        answers = responses.map((r) => {
+          const q = quiz.questions[r.questionIndex];
+          const isCorrect = q && r.selectedIndex === q.correctIndex;
+          return {
+            questionIndex: r.questionIndex,
+            question: q?.question ?? "(unknown question)",
+            topic: q?.topic ?? "Unknown",
+            options: q?.options ?? [],
+            selectedOption: q?.options?.[r.selectedIndex] ?? null,
+            correctOption: q?.options?.[q?.correctIndex] ?? null,
+            explanation: q?.explanation ?? "",
+            isCorrect: Boolean(isCorrect),
+            confidence: r.confidence || "unsure",
+            errorCategory: isCorrect ? null : r.errorCategory || "Conceptual",
+          };
+        });
+      }
+
+      const score = isFreeText
+        ? answers.reduce((sum, a) => sum + a.score, 0) / answers.length
+        : answers.filter((a) => a.isCorrect).length;
 
       const attemptId = nanoid(10);
       database.attempts[attemptId] = {
@@ -51,6 +89,7 @@ export function quizzesRouter() {
         sessionId: req.sessionId,
         quizId: quiz.id,
         documentId: quiz.documentId,
+        mode: quiz.mode,
         answers,
         score,
         total: answers.length,

@@ -14,6 +14,7 @@ import { doubtsRouter } from "./routes/doubts.js";
 import { quizzesRouter, attemptsRouter, followUpsRouter } from "./routes/quizzes.js";
 import { reviewRouter } from "./routes/review.js";
 import { calibrationRouter } from "./routes/calibration.js";
+import { dashboardRouter } from "./routes/dashboard.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -62,6 +63,7 @@ app.use("/api/attempts", attemptsRouter());
 app.use("/api/follow-ups", followUpsRouter());
 app.use("/api/review-queue", reviewRouter());
 app.use("/api/calibration", calibrationRouter());
+app.use("/api/dashboard", dashboardRouter());
 
 app.listen(PORT, () => {
   console.log(`Study Helper backend running at http://localhost:${PORT}`);

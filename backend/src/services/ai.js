@@ -18,6 +18,31 @@ function apiKey() {
   return key;
 }
 
+// ---------------------------------------------------------------------------
+// Request throttling — Gemini free-tier RPM is low (15 req/min for Flash).
+// We serialize calls through a FIFO queue with a minimum gap between them.
+// ---------------------------------------------------------------------------
+const GEMINI_RPM = Number(process.env.GEMINI_RPM) || 15; // requests per minute
+const MIN_GAP_MS = Math.round(60_000 / GEMINI_RPM);     // e.g. 4000ms at 15 RPM
+let lastCallAt = 0;
+let queuePromise = Promise.resolve();
+
+/**
+ * Enqueue a Gemini call so it respects the RPM limit. Callers pass an async
+ * function that actually hits the API; this wrapper waits for the previous
+ * call to finish AND for the minimum inter-call gap before running it.
+ */
+function enqueueGemini(fn) {
+  queuePromise = queuePromise.then(async () => {
+    const now = Date.now();
+    const wait = Math.max(0, MIN_GAP_MS - (now - lastCallAt));
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    lastCallAt = Date.now();
+    return fn();
+  });
+  return queuePromise;
+}
+
 /**
  * Low-level call to a Gemini model. Returns the raw text of the first candidate.
  * imageData (optional): { mimeType, data (base64) } — sent as an inline vision
@@ -46,11 +71,12 @@ async function callGemini(model, { systemInstruction, prompt, jsonMode = false, 
     body.systemInstruction = { parts: [{ text: systemInstruction }] };
   }
 
-  const res = await fetch(url, {
+  // Serialize through the RPM-aware queue so we never exceed the free-tier limit.
+  const res = await enqueueGemini(() => fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
+  }));
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -228,17 +254,37 @@ SELECTED PASSAGE:
 // ---------------------------------------------------------------------------
 // 4. Structured quiz generation — resilient JSON parsing + fallback
 // ---------------------------------------------------------------------------
-export async function generateQuiz(sourceText, count = 5) {
+export async function generateQuiz(sourceText, count = 5, mode = "mcq") {
   const model = process.env.GEMINI_MODEL_QUIZ || "gemini-3.6-flash";
   // Real fallback (not the same model twice) — Flash-Lite is smaller and
   // typically responds faster, giving the timeout retry an actual chance.
   const fallback = process.env.GEMINI_MODEL_QUIZ_FALLBACK || process.env.GEMINI_MODEL_KEYTERMS || "gemini-3.5-flash-lite";
 
-  const prompt = `Create a ${count}-question multiple-choice quiz grounded ONLY in the study material below.
-Each question needs exactly 4 options and one correct answer. Vary difficulty. Avoid trivial phrasing matches.
+  if (mode === "freeText") {
+    const prompt = `Create ${count} short-answer / free-text quiz questions grounded ONLY in the study material below.
+Each question should test understanding of a specific concept. Provide a model answer and key grading criteria.
 Return ONLY JSON in this exact shape:
 {"questions": [
-  {"question": "...", "options": ["...","...","...","..."], "correctIndex": 0, "explanation": "why this is correct, one sentence"}
+  {"question": "...", "topic": "Concept name (e.g. Stack Overflow, Recursion)", "modelAnswer": "...", "gradingCriteria": ["criterion 1", "criterion 2"]}
+]}
+
+MATERIAL:
+"""${sourceText.slice(0, 12000)}"""`;
+
+    const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 4096 }, 45000);
+    const parsed = parseJsonLoose(raw);
+    return (parsed.questions ?? [])
+      .filter((q) => q && typeof q.question === "string" && typeof q.topic === "string")
+      .slice(0, count);
+  }
+
+  // MCQ mode (default)
+  const prompt = `Create a ${count}-question multiple-choice quiz grounded ONLY in the study material below.
+Each question needs exactly 4 options and one correct answer. Vary difficulty. Avoid trivial phrasing matches.
+Tag each question with its underlying concept/topic for learning analytics.
+Return ONLY JSON in this exact shape:
+{"questions": [
+  {"question": "...", "topic": "Concept name (e.g. Stack Overflow, Recursion)", "options": ["...","...","...","..."], "correctIndex": 0, "explanation": "why this is correct, one sentence"}
 ]}
 
 MATERIAL:
@@ -246,8 +292,7 @@ MATERIAL:
 
   // Quiz generation asks for more output tokens than other calls, so give it
   // more time before giving up — 30s was too tight for a 5-question JSON payload.
-  // A larger token budget also prevents the JSON being truncated mid-array.
-  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 8192 }, 45000);
+  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 4096 }, 45000);
   const parsed = parseJsonLoose(raw);
   const questions = parsed.questions ?? [];
 
@@ -257,6 +302,7 @@ MATERIAL:
       (q) =>
         q &&
         typeof q.question === "string" &&
+        typeof q.topic === "string" &&
         Array.isArray(q.options) &&
         q.options.length === 4 &&
         Number.isInteger(q.correctIndex) &&
@@ -287,7 +333,7 @@ Return ONLY JSON: {"question": "...", "options": ["...","...","...","..."], "cor
 MATERIAL:
 """${sourceText.slice(0, 8000)}"""`;
 
-  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 4096 }, 45000);
+  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 2048 }, 45000);
   const parsed = parseJsonLoose(raw);
 
   if (
@@ -330,7 +376,7 @@ Rules:
   const raw = await withFallback(
     model,
     fallback,
-    { prompt, imageData: { mimeType, data: base64Data }, jsonMode: true, maxOutputTokens: 8192 },
+    { prompt, imageData: { mimeType, data: base64Data }, jsonMode: true, maxOutputTokens: 4096 },
     45000
   );
 
@@ -396,5 +442,44 @@ function parseMarkdownWordList(raw) {
     });
   }
   return words;
+}
+
+// ---------------------------------------------------------------------------
+// 7. Free-text answer grading — compares student response against model answer
+// and grading criteria, returns a score (0-1) and detailed feedback.
+// ---------------------------------------------------------------------------
+export async function gradeFreeTextAnswer(studentAnswer, question) {
+  const model = process.env.GEMINI_MODEL_QUIZ || "gemini-3.6-flash";
+  const fallback = process.env.GEMINI_MODEL_QUIZ_FALLBACK || process.env.GEMINI_MODEL_KEYTERMS || "gemini-3.5-flash-lite";
+
+  const prompt = `Grade this student's free-text answer against the model answer and grading criteria.
+Be fair but precise — reward partial understanding with proportional credit.
+
+QUESTION: "${question.question}"
+TOPIC: "${question.topic}"
+MODEL ANSWER: "${question.modelAnswer}"
+GRADING CRITERIA: ${JSON.stringify(question.gradingCriteria)}
+STUDENT ANSWER: "${studentAnswer}"
+
+Return ONLY JSON:
+{"score": 0.8, "feedback": "Specific feedback explaining what was correct, what was missing, and how to improve", "matchedCriteria": ["criterion 1"], "missedCriteria": ["criterion 2"]}
+
+Score should be 0.0 to 1.0.`;
+
+  // Grading feedback is brief — 2048 tokens is plenty. Lower timeout reduces
+  // wasted wait time when the API is slow; the throttle queue already serializes calls.
+  const raw = await withFallback(model, fallback, { prompt, jsonMode: true, maxOutputTokens: 2048 }, 30000);
+  const parsed = parseJsonLoose(raw);
+
+  if (!parsed || typeof parsed.score !== "number" || typeof parsed.feedback !== "string") {
+    throw new Error("Free-text grading returned an invalid shape.");
+  }
+
+  return {
+    score: Math.max(0, Math.min(1, parsed.score)),
+    feedback: parsed.feedback,
+    matchedCriteria: Array.isArray(parsed.matchedCriteria) ? parsed.matchedCriteria : [],
+    missedCriteria: Array.isArray(parsed.missedCriteria) ? parsed.missedCriteria : [],
+  };
 }
 

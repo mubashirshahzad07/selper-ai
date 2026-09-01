@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { promises as fs } from "fs";
 
 import { db } from "../repositories/store.js";
-import { extractPdfText, extractImageText } from "../services/extraction.js";
+import { extractPdfText, extractImageText, extractScannedPdfText } from "../services/extraction.js";
 import { extractKeyTerms, generateQuiz } from "../services/ai.js";
 import { assertOwnership } from "../middleware/session.js";
 import { asyncRoute } from "./asyncRoute.js";
@@ -24,6 +24,38 @@ function runBackgroundOcr(docId, filePath, mimetype) {
       if (doc) {
         doc.extractedText = result.text;
         doc.ocrData = result.words;
+        doc.ocrApplied = true;
+        await db.save();
+      }
+    } catch (err) {
+      const database = await db.get();
+      const doc = database.documents[docId];
+      if (doc) {
+        doc.ocrError = err.message;
+        await db.save();
+      }
+    }
+  });
+}
+
+/**
+ * Fallback for scanned/rasterized PDFs (no embedded text layer): rasterise each
+ * page server-side and run the same Gemini vision OCR pipeline as image uploads,
+ * storing per-page word boxes + transcription on the document. Runs after the
+ * upload response so uploads stay fast.
+ */
+function runBackgroundScannedOcr(docId, filePath) {
+  setImmediate(async () => {
+    try {
+      const buffer = await fs.readFile(filePath);
+      const { pages, fullText } = await extractScannedPdfText(buffer);
+      const database = await db.get();
+      const doc = database.documents[docId];
+      if (doc) {
+        doc.ocrData = pages; // { "1": { text, words, hasNativeText, images? }, ... }
+        // Append (not overwrite) so mixed PDFs keep their native text alongside
+        // the OCR'd image/scanned text for key terms / quiz.
+        if (fullText) doc.extractedText = doc.extractedText ? `${doc.extractedText}\n\n${fullText}` : fullText;
         doc.ocrApplied = true;
         await db.save();
       }
@@ -94,8 +126,11 @@ export function documentsRouter(upload) {
       };
       await db.save();
 
-      // Kick off image OCR in the background so the upload response returns fast.
+      // Kick off OCR in the background so the upload response returns fast. The
+      // PDF handler is hybrid: it skips native-text pages and only spends Gemini
+      // calls on fully-scanned pages and embedded image blocks.
       if (isImage) runBackgroundOcr(id, req.file.path, req.file.mimetype);
+      else if (isPdf) runBackgroundScannedOcr(id, req.file.path);
 
       res.json({
         id,
@@ -146,6 +181,7 @@ export function documentsRouter(upload) {
 
   // -------------------------------------------------------------------------
   // Quiz generation (structured JSON, deterministic grading happens in quizzes.js)
+  // Supports MCQ and free-text modes, configurable question count.
   // -------------------------------------------------------------------------
   router.post(
     "/:id/quiz",
@@ -157,28 +193,51 @@ export function documentsRouter(upload) {
         return res.status(422).json({ error: "No extracted text available for this document." });
       }
 
-      const questions = await generateQuiz(doc.extractedText, 5);
+      // Defensive: ensure count and mode are read correctly from JSON body.
+      const rawCount = Number(req.body?.count);
+      const count = Math.min(Math.max(Number.isFinite(rawCount) ? rawCount : 5, 3), 20);
+      const mode = req.body?.mode === "freeText" ? "freeText" : "mcq";
+
+      const questions = await generateQuiz(doc.extractedText, count, mode);
       if (questions.length === 0) {
         return res.status(502).json({ error: "Quiz generation failed to produce valid questions." });
       }
 
       const id = nanoid(10);
-      // Store answer keys server-side; client never receives correctIndex up front... but for a
-      // hackathon-simple flow we DO send it so the UI can show explanations, and grading is
-      // re-verified server-side on submit regardless of what the client sends back.
       database.quizzes[id] = {
         id,
         sessionId: req.sessionId,
         documentId: doc.id,
         questions,
+        mode,
         createdAt: new Date().toISOString(),
       };
       await db.save();
 
+      // Return questions without answers — client submits responses for server-side grading.
+      const safeQuestions = questions.map((q) => {
+        if (mode === "freeText") {
+          return {
+            questionIndex: questions.indexOf(q),
+            question: q.question,
+            topic: q.topic,
+            mode: "freeText",
+          };
+        }
+        return {
+          questionIndex: questions.indexOf(q),
+          question: q.question,
+          topic: q.topic,
+          options: q.options,
+          mode: "mcq",
+        };
+      });
+
       res.json({
         id,
         documentId: doc.id,
-        questions: questions.map((q) => ({ question: q.question, options: q.options })),
+        mode,
+        questions: safeQuestions,
       });
     })
   );
