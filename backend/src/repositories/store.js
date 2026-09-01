@@ -1,4 +1,4 @@
-// lib/store.mjs
+// backend/src/repositories/store.js
 // Minimal file-backed persistence. No real accounts (PRD 10 — "Authentication:
 // not yet required"), but data IS scoped to an anonymous guest session so one
 // browser can't see another's documents/doubts/quizzes. Swap for a real DB
@@ -9,11 +9,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "..", "data", "db.json");
+// __dirname is backend/src/repositories/ — data/ lives at backend/data/, two levels up.
+const DB_PATH = path.join(__dirname, "..", "..", "data", "db.json");
 
 const EMPTY_DB = {
   sessions: {}, // id -> { id, createdAt, lastSeenAt }
-  documents: {}, // id -> { id, sessionId, filename, uploadedAt, extractedText, keyTerms, pageCount }
+  documents: {}, // id -> { id, sessionId, filename, uploadedAt, extractedText, ocrData, keyTerms, pageCount }
   doubts: {}, // id -> { id, sessionId, documentId, passage, note, createdAt }
   quizzes: {}, // id -> { id, sessionId, documentId, questions, createdAt }
   attempts: {}, // id -> { id, sessionId, quizId, documentId, answers[], score, createdAt }

@@ -1,11 +1,11 @@
-// lib/session.mjs
+// backend/src/middleware/session.js
 // Lightweight guest sessions, no passwords/accounts. A session id scopes all
 // documents/doubts/quizzes/attempts so one browser's data stays private from
 // another's — the same shape as selper-ai-main's requireSession, adapted to
 // this project's plain-Express + JSON-store setup.
 
 import { nanoid } from "nanoid";
-import { db } from "./store.mjs";
+import { db } from "../repositories/store.js";
 
 const HEADER = "x-study-session";
 

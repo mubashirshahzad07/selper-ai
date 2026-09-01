@@ -1,4 +1,4 @@
-// lib/wikipedia.mjs
+// backend/src/services/wikipedia.js
 // Definitions come from Wikipedia (MediaWiki REST API), kept visibly distinct
 // from Gemini so AI boundaries stay transparent (PRD 4, "Transparent AI boundaries").
 

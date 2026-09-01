@@ -1,4 +1,4 @@
-// public/js/app.js
+// frontend/js/app.js
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -13,6 +13,17 @@ const state = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+// ---------------------------------------------------------------- backend origin
+// The backend is a separate app/origin now (see frontend/js/config.js). Every
+// backend-bound URL — API calls AND asset URLs like uploaded file paths —
+// needs this prefix; a bare "/api/..." or "/uploads/..." would otherwise
+// resolve against the frontend's own origin instead.
+const API_BASE = window.STUDY_HELPER_API_BASE || "";
+function backendUrl(path) {
+  if (/^https?:\/\//i.test(path)) return path; // already absolute
+  return `${API_BASE}${path}`;
+}
+
 // ---------------------------------------------------------------- guest session
 // Every request carries x-study-session so the backend can scope documents,
 // doubts, quizzes, and attempts to this browser only. The server issues one
@@ -26,13 +37,14 @@ function storeSessionId(id) {
   if (id) localStorage.setItem(SESSION_KEY, id);
 }
 
-/** api() wrapper: attaches the session header and captures any new session id. */
+/** api() wrapper: resolves against the backend origin, attaches the session
+ *  header, and captures any new session id from the response. */
 async function api(url, options = {}) {
   const headers = new Headers(options.headers || {});
   const existing = getStoredSessionId();
   if (existing) headers.set("x-study-session", existing);
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(backendUrl(url), { ...options, headers });
   const issued = res.headers.get("x-study-session");
   if (issued) storeSessionId(issued);
   return res;
@@ -79,13 +91,11 @@ async function handleUpload(file) {
   setStatus(`${doc.filename} · original layout`);
 
   if (doc.isPdf) {
-    await renderPdf(doc.url);
+    await renderPdf(backendUrl(doc.url));
     const full = await api(`/api/documents/${doc.id}`).then((r) => r.json());
     state.extractedText = full.extractedText || "";
     $("#textView").textContent = state.extractedText || "(No extractable text found in this PDF.)";
   } else {
-    $("#pdfPages").innerHTML = `<img src="${doc.url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 24px -8px rgba(0,0,0,.15)" />`;
-
     // Images go through OCR (Gemini vision) server-side — pull the transcribed
     // text the same way PDFs do, so key terms/quiz/define all work on photos
     // of notes, whiteboards, textbook pages, etc., not just clean PDFs.
@@ -93,13 +103,23 @@ async function handleUpload(file) {
     state.extractedText = full.extractedText || "";
     $("#textView").textContent = state.extractedText || "(No text could be extracted from this image.)";
 
-    if (doc.ocrApplied && state.extractedText) {
-      setStatus(`${doc.filename} · text extracted from image`);
-    } else if (doc.ocrError) {
-      setStatus(`${doc.filename} · text extraction failed: ${doc.ocrError}`);
-    } else {
-      setStatus(`${doc.filename} · original layout`);
-    }
+    const imageUrl = backendUrl(doc.url);
+
+    // Show the image immediately (upload stays fast). Server OCR now runs in the
+    // background, so ocrData may be empty at first — the word layer is upgraded
+    // asynchronously by client-side Tesseract below.
+    renderImageWithOcr(imageUrl, full.ocrData);
+    setStatus(`${doc.filename} · original layout`);
+
+    // Client-side Tesseract fills the selectable word layer without blocking.
+    ocrImageClientSide(imageUrl).then((words) => {
+      if (words && words.length > 0) {
+        renderImageWithOcr(imageUrl, words);
+        setStatus(`${doc.filename} · text extracted from image · right-click any word`);
+      } else if (state.extractedText) {
+        setStatus(`${doc.filename} · text extracted from image`);
+      }
+    });
   }
 }
 
@@ -129,6 +149,104 @@ async function renderPdf(url) {
   baseScale = Math.min(Math.max(available / naturalWidth, 0.4), 1.6);
 
   await renderAllPages();
+}
+
+/**
+ * Run client-side OCR (Tesseract.js) to get word-level bounding boxes for an
+ * image. Returns normalised words [{ text, bbox: {x,y,w,h} }] or [] on failure.
+ * Used when the server's Gemini OCR didn't return coordinates.
+ */
+async function ocrImageClientSide(url) {
+  if (typeof Tesseract === "undefined") return [];
+  try {
+    const img = new Image();
+    // Frontend and backend are separate origins now — Tesseract draws this
+    // image onto a canvas internally, which throws a "tainted canvas" security
+    // error on a cross-origin image unless crossOrigin is set here AND the
+    // backend sends Access-Control-Allow-Origin on the image response (it
+    // does, via the cors() middleware applied before /uploads in index.js).
+    img.crossOrigin = "anonymous";
+    img.src = url;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+    const nw = img.naturalWidth || 1;
+    const nh = img.naturalHeight || 1;
+
+    const { data } = await Tesseract.recognize(img, "eng");
+    const words = (data.words || [])
+      .filter((w) => w && w.text && w.text.trim() && w.bbox)
+      .map((w) => ({
+        text: w.text.trim(),
+        bbox: {
+          x: w.bbox.x0 / nw,
+          y: w.bbox.y0 / nh,
+          w: (w.bbox.x1 - w.bbox.x0) / nw,
+          h: (w.bbox.y1 - w.bbox.y0) / nh,
+        },
+      }));
+
+    // Also surface the transcription in the Study text tab if the server
+    // couldn't extract anything.
+    if (data.text && !state.extractedText) {
+      state.extractedText = data.text;
+      $("#textView").textContent = data.text;
+    }
+    return words;
+  } catch (err) {
+    console.error("Client-side OCR failed:", err);
+    return [];
+  }
+}
+
+/**
+ * Render an uploaded image with an invisible, selectable word layer built from
+ * OCR bounding boxes. Right-clicking a word behaves the same as in a PDF.
+ */
+function renderImageWithOcr(url, ocrData) {
+  const pagesEl = $("#pdfPages");
+  pagesEl.innerHTML = "";
+
+  const wrap = document.createElement("div");
+  wrap.className = "image-page-wrap";
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = state.filename || "Uploaded image";
+  wrap.appendChild(img);
+
+  const layer = document.createElement("div");
+  layer.className = "image-text-layer";
+
+  if (Array.isArray(ocrData)) {
+    for (const w of ocrData) {
+      if (!w || !w.text) continue;
+      const b = w.bbox || {};
+      const span = document.createElement("span");
+      span.textContent = w.text;
+      span.dataset.word = w.text.replace(/[^\w'-]/g, "");
+      span.style.left = `${(Number(b.x) || 0) * 100}%`;
+      span.style.top = `${(Number(b.y) || 0) * 100}%`;
+      span.style.width = `${(Number(b.w) || 0) * 100}%`;
+      span.style.height = `${(Number(b.h) || 0) * 100}%`;
+      span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, null));
+      layer.appendChild(span);
+    }
+  }
+
+  // Prevent the browser's default image/page context menu on empty areas of
+  // the text layer. Word spans handle their own contextmenu. If OCR produced
+  // no words, leave the default menu alone so the user still has some feedback.
+  if (layer.querySelector("span")) {
+    layer.addEventListener("contextmenu", (e) => {
+      if (e.target.closest(".image-text-layer span")) return;
+      e.preventDefault();
+    });
+  }
+
+  wrap.appendChild(layer);
+  pagesEl.appendChild(wrap);
 }
 
 async function renderAllPages() {
@@ -219,7 +337,8 @@ function buildWordLayer(layerEl, textContent, viewport) {
 
 function surroundingContextFor(word, layerEl) {
   // Grab nearby word spans' text as a crude context window.
-  const spans = Array.from(layerEl.parentElement.querySelectorAll(".pdf-text-layer span"));
+  const container = layerEl?.parentElement || document;
+  const spans = Array.from(container.querySelectorAll(".pdf-text-layer span, .image-text-layer span"));
   return spans.map((s) => s.textContent).join(" ").slice(0, 3000);
 }
 
@@ -244,7 +363,7 @@ function paintHighlight(span) {
   clearHighlights();
   const rect = document.createElement("div");
   rect.className = "word-highlight-rect";
-  const wrap = span.closest(".pdf-page-wrap");
+  const wrap = span.closest(".pdf-page-wrap, .image-page-wrap");
   const spanRect = span.getBoundingClientRect();
   const wrapRect = wrap.getBoundingClientRect();
   rect.style.left = `${spanRect.left - wrapRect.left - 3}px`;
@@ -382,15 +501,21 @@ async function runDefine() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Request failed");
 
-    const defBlock = data.definition
-      ? `<p>${escapeHtml(data.definition.extract)}</p>
-         <a class="assist-ref" href="${data.definition.url}" target="_blank" rel="noopener">Open Wikipedia reference →</a>`
-      : `<p>${escapeHtml(data.resolvedSense || "No matching reference article was found.")}</p>`;
+    // Primary answer is the concise Gemini definition; Wikipedia is an optional
+    // deep-dive reference shown only as a small link.
+    const body = data.definition
+      ? `<p>${escapeHtml(data.definition)}</p>`
+      : `<p>${escapeHtml(data.resolvedSense || "No definition was found.")}</p>`;
+
+    const wikiLink = data.wikipedia
+      ? `<a class="assist-ref" href="${data.wikipedia.url}" target="_blank" rel="noopener">Open Wikipedia reference →</a>`
+      : "";
 
     assistBody.innerHTML = `
       <div class="assist-label">Definition</div>
-      <h4>${escapeHtml(data.definition?.title || text)}</h4>
-      ${defBlock}
+      <h4>${escapeHtml(data.wikipedia?.title || text)}</h4>
+      ${body}
+      ${wikiLink}
     `;
   } catch (err) {
     assistBody.innerHTML = errorBlock(err);

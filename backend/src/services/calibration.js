@@ -1,4 +1,4 @@
-// lib/calibration.mjs
+// backend/src/services/calibration.js
 // Confidence calibration: not just a score, but whether the student's sense
 // of "I know this" actually tracks whether they're right. Deterministic, no
 // AI call — pulled from data the app already records on every quiz answer.

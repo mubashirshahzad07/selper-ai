@@ -1,4 +1,4 @@
-// lib/spaced-repetition.mjs
+// backend/src/services/spacedRepetition.js
 // A simple SM-2-lite interval schedule for review-queue items: get it right,
 // the interval grows; get it wrong, it resets to day 1. Deterministic, no AI
 // call — this turns the review queue from a static list into something with

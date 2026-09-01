@@ -1,6 +1,6 @@
-// lib/review.mjs
+// backend/src/services/reviewQueue.js
 // Review queue ordering per PRD 5.5, extended with spaced-repetition due
-// status (lib/spaced-repetition.mjs). Deterministic, no AI call.
+// status (services/spacedRepetition.js). Deterministic, no AI call.
 //
 // Priority groups, in order (applied WITHIN the due items):
 //   1. Confident-but-wrong answers
@@ -12,7 +12,7 @@
 // Due items (never scheduled, or past their next-review date) always sort
 // ahead of not-yet-due items, which are shown separately as "upcoming."
 
-import { isDue, daysUntilDue, keyForReviewItem } from "./spaced-repetition.mjs";
+import { isDue, daysUntilDue, keyForReviewItem } from "./spacedRepetition.js";
 
 function classifyAttemptItem(item) {
   // item: { confidence: 'confident'|'unsure'|'guessing', errorCategory: 'Conceptual'|'Careless'|'Terminology', isCorrect }

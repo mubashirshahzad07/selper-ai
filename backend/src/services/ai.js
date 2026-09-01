@@ -1,4 +1,4 @@
-// lib/ai.mjs
+// backend/src/services/ai.js
 // Gemini is the sole AI provider (PRD 6.1). No multi-provider abstraction.
 // Every function here does ONE narrowly scoped task and returns structured data.
 
@@ -136,9 +136,11 @@ MATERIAL:
 export async function resolveWordSense(word, surroundingContext) {
   const model = process.env.GEMINI_MODEL_DEFINE || "gemini-3.6-flash";
   const prompt = `A student right-clicked the word "${word}" while reading the passage below.
-Determine the single most likely intended sense of this word IN THIS CONTEXT, phrased as a short
-Wikipedia-searchable article title (e.g. "Return statement" not "return").
-Return ONLY JSON: {"searchTitle": "...", "sense": "one sentence describing the intended meaning"}
+1. Determine the single most likely intended sense of this word IN THIS CONTEXT, phrased as a
+   short Wikipedia-searchable article title (e.g. "Return statement" not "return").
+2. Write a concise, plain-language definition of the word AS USED HERE — 2 to 3 short sentences,
+   like a helpful chat answer. Do not write an essay.
+Return ONLY JSON: {"searchTitle": "...", "sense": "one sentence describing the intended meaning", "definition": "2-3 sentence definition"}
 
 PASSAGE:
 """${surroundingContext.slice(0, 2000)}"""`;
@@ -264,21 +266,93 @@ MATERIAL:
 // Gemini's vision input directly instead of a separate OCR library, since the
 // Gemini client is already wired up here.
 // ---------------------------------------------------------------------------
+/**
+ * Image transcription with word-level bounding boxes so the frontend can
+ * build a selectable text layer over the original image. Returns:
+ *   { text: "full plain text", words: [{ text: "...", bbox: {x,y,w,h} }] }
+ * where bbox coordinates are normalised 0-1 relative to the image dimensions.
+ */
 export async function extractTextFromImage(base64Data, mimeType) {
   const model = process.env.GEMINI_MODEL_OCR || process.env.GEMINI_MODEL_DEFINE || "gemini-3.6-flash";
   const fallback = process.env.GEMINI_MODEL_QUIZ_FALLBACK || "gemini-3.5-flash-lite";
 
-  const prompt = `Transcribe every piece of readable text in this image exactly as it appears —
-lecture slides, handwritten notes, whiteboard photos, textbook pages, anything. Preserve the
-original structure (headings, bullet points, line breaks) as plain text. If nothing is legible,
-return an empty string. Return ONLY the transcribed text — no commentary, no markdown fences.`;
+  const prompt = `Transcribe every readable word in this image with its position. Return ONLY a single
+JSON object, no markdown, no bullet points, no code fences, no commentary. Exact shape:
+{"text":"the full plain transcription","words":[{"text":"word1","bbox":{"x":0.12,"y":0.34,"w":0.08,"h":0.03}},{"text":"word2","bbox":{"x":0.2,"y":0.34,"w":0.08,"h":0.03}}]}
+Rules:
+- "x" and "y" are the top-left corner of the word's bounding box; "w" and "h" are width and height.
+- All bbox values are normalised 0-1 relative to the image width/height.
+- Include every readable word, in reading order.
+- If nothing is legible, return {"text":"","words":[]}.`;
 
   const raw = await withFallback(
     model,
     fallback,
-    { prompt, imageData: { mimeType, data: base64Data } },
+    { prompt, imageData: { mimeType, data: base64Data }, jsonMode: true },
     45000
   );
-  return raw.trim();
+
+  let parsed = null;
+  try {
+    parsed = parseJsonLoose(raw);
+  } catch (err) {
+    parsed = null;
+  }
+
+  // Prefer the JSON words array; recover from a markdown word list otherwise.
+  let words = normaliseWords(parsed?.words);
+  if (words.length === 0) {
+    words = parseMarkdownWordList(raw);
+  }
+
+  const text =
+    typeof parsed?.text === "string" && parsed.text.trim()
+      ? parsed.text
+      : words.map((w) => w.text).join(" ") || raw.trim();
+
+  return { text, words };
+}
+
+/** Validate a parsed `words` array from the JSON shape. */
+function normaliseWords(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((w) => w && typeof w.text === "string" && w.bbox)
+    .map((w) => ({
+      text: w.text,
+      bbox: {
+        x: Number(w.bbox.x) ?? 0,
+        y: Number(w.bbox.y) ?? 0,
+        w: Number(w.bbox.w) ?? 0,
+        h: Number(w.bbox.h) ?? 0,
+      },
+    }));
+}
+
+/**
+ * Recovery parser for models that ignore the JSON instruction and emit a
+ * markdown list such as:
+ *   * `AI`: x: 0.057, y: 0.350, w: 0.010, h: 0.016
+ * Extracts the word and its normalised bounding box from each line.
+ */
+function parseMarkdownWordList(raw) {
+  const words = [];
+  const lineRe =
+    /[`"']?([^`"'\n:]+)[`"']?\s*:\s*x\s*[:=]\s*([\d.]+)\s*,\s*y\s*[:=]\s*([\d.]+)\s*,\s*w\s*[:=]\s*([\d.]+)\s*,\s*h\s*[:=]\s*([\d.]+)/gi;
+  let m;
+  while ((m = lineRe.exec(raw)) !== null) {
+    const text = m[1].trim();
+    if (!text) continue;
+    words.push({
+      text,
+      bbox: {
+        x: parseFloat(m[2]),
+        y: parseFloat(m[3]),
+        w: parseFloat(m[4]),
+        h: parseFloat(m[5]),
+      },
+    });
+  }
+  return words;
 }
 

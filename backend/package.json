@@ -1,0 +1,23 @@
+{
+  "name": "study-helper-backend",
+  "version": "1.0.0",
+  "description": "Study Helper API — Gemini-only, hosted-first. Serves /api/* and /uploads/*; the frontend is a separate static app (../frontend).",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.5",
+    "nanoid": "^5.0.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -197,6 +197,48 @@ button { font-family: inherit; cursor: pointer; }
 }
 .pdf-text-layer span { position: absolute; white-space: pre; cursor: text; user-select: text; }
 
+/* image viewer mirrors the PDF page wrap so right-click OCR words work */
+.image-page-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px -8px rgba(0,0,0,.15);
+}
+.image-page-wrap img {
+  display: block; width: 100%; height: auto; border-radius: 8px;
+  /* The text layer sits above the image and handles all pointer events,
+     including right-click word selection. Disable the image's own menu. */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.image-text-layer {
+  position: absolute; inset: 0;
+  line-height: 1;
+  color: transparent;
+  background: transparent;
+  pointer-events: auto;
+  z-index: 2;
+}
+.image-text-layer span {
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  user-select: text;
+  display: flex;
+  align-items: center;
+  color: transparent;
+  pointer-events: auto;
+  z-index: 3;
+}
+/* Slight hover hint so users can discover selectable OCR words. */
+.image-text-layer span:hover {
+  color: rgba(28, 27, 34, 0.35);
+  background: rgba(217, 166, 46, 0.12);
+  border-radius: 3px;
+}
+
 .text-view {
   max-width: 720px;
   font-family: var(--font-display);

@@ -1,0 +1,9 @@
+{
+  "name": "study-helper-frontend",
+  "version": "1.0.0",
+  "description": "Study Helper frontend — plain HTML/CSS/JS, talks to the backend API over HTTP (see js/config.js). No build step, no dependencies.",
+  "type": "module",
+  "scripts": {
+    "start": "node serve.js"
+  }
+}
