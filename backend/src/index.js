@@ -15,6 +15,7 @@ import { quizzesRouter, attemptsRouter, followUpsRouter } from "./routes/quizzes
 import { reviewRouter } from "./routes/review.js";
 import { calibrationRouter } from "./routes/calibration.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { settingsRouter } from "./routes/settings.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -64,11 +65,12 @@ app.use("/api/follow-ups", followUpsRouter());
 app.use("/api/review-queue", reviewRouter());
 app.use("/api/calibration", calibrationRouter());
 app.use("/api/dashboard", dashboardRouter());
+app.use("/api/settings", settingsRouter());
 
 app.listen(PORT, () => {
   console.log(`Study Helper backend running at http://localhost:${PORT}`);
   console.log(`CORS allowed origin: ${allowedOrigin}`);
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn("⚠️  GEMINI_API_KEY is not set — AI routes will fail until you add it to .env");
+  if (!process.env.MANUS_API_KEY) {
+    console.warn("⚠️  MANUS_API_KEY is not set — AI routes will fail until you add it to .env");
   }
 });

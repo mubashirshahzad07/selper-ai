@@ -40,7 +40,7 @@ function runBackgroundOcr(docId, filePath, mimetype) {
 
 /**
  * Fallback for scanned/rasterized PDFs (no embedded text layer): rasterise each
- * page server-side and run the same Gemini vision OCR pipeline as image uploads,
+ * page server-side and run the same Manus vision OCR pipeline as image uploads,
  * storing per-page word boxes + transcription on the document. Runs after the
  * upload response so uploads stay fast.
  */
@@ -100,7 +100,7 @@ export function documentsRouter(upload) {
         extractedText = parsed.text;
         pageCount = parsed.pageCount;
       } else if (isImage) {
-        // OCR is intentionally NOT awaited here — running Gemini vision inline made
+        // OCR is intentionally NOT awaited here — running Manus vision inline made
         // image uploads take tens of seconds. The document is saved immediately and
         // OCR runs in the background (see runBackgroundOcr below), so the upload
         // stays fast and the word layer is filled in shortly after.
@@ -127,7 +127,7 @@ export function documentsRouter(upload) {
       await db.save();
 
       // Kick off OCR in the background so the upload response returns fast. The
-      // PDF handler is hybrid: it skips native-text pages and only spends Gemini
+      // PDF handler is hybrid: it skips native-text pages and only spends Manus
       // calls on fully-scanned pages and embedded image blocks.
       if (isImage) runBackgroundOcr(id, req.file.path, req.file.mimetype);
       else if (isPdf) runBackgroundScannedOcr(id, req.file.path);
@@ -158,7 +158,7 @@ export function documentsRouter(upload) {
   );
 
   // -------------------------------------------------------------------------
-  // Key-term extraction (Gemini Flash-Lite + Flash fallback)
+  // Key-term extraction (Manus Lite agent)
   // -------------------------------------------------------------------------
   router.post(
     "/:id/key-terms",

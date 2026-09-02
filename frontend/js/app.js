@@ -10,6 +10,15 @@ const state = {
   pendingSelection: null, // { type: 'word'|'passage', text, context, rect }
 };
 
+// ---------------------------------------------------------------- debug log
+// In-memory ring buffer of API calls for the Debug drawer. Keeps last 200 entries.
+const DEBUG_LOG = [];
+const DEBUG_LOG_MAX = 200;
+function pushDebugLog(entry) {
+  DEBUG_LOG.push(entry);
+  if (DEBUG_LOG.length > DEBUG_LOG_MAX) DEBUG_LOG.shift();
+}
+
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -38,16 +47,26 @@ function storeSessionId(id) {
 }
 
 /** api() wrapper: resolves against the backend origin, attaches the session
- *  header, and captures any new session id from the response. */
+ *  header, captures any new session id from the response, and logs to debug. */
 async function api(url, options = {}) {
   const headers = new Headers(options.headers || {});
   const existing = getStoredSessionId();
   if (existing) headers.set("x-study-session", existing);
 
-  const res = await fetch(backendUrl(url), { ...options, headers });
-  const issued = res.headers.get("x-study-session");
-  if (issued) storeSessionId(issued);
-  return res;
+  const fullUrl = backendUrl(url);
+  const t0 = Date.now();
+  pushDebugLog({ time: new Date().toISOString(), method: options.method || "GET", url: fullUrl, body: options.body ? String(options.body).slice(0, 300) : null });
+
+  try {
+    const res = await fetch(fullUrl, { ...options, headers });
+    const issued = res.headers.get("x-study-session");
+    if (issued) storeSessionId(issued);
+    pushDebugLog({ time: new Date().toISOString(), status: res.status, ms: Date.now() - t0, url: fullUrl });
+    return res;
+  } catch (err) {
+    pushDebugLog({ time: new Date().toISOString(), error: err.message, ms: Date.now() - t0, url: fullUrl });
+    throw err;
+  }
 }
 
 // ---------------------------------------------------------------- upload
@@ -848,6 +867,156 @@ function renderCalibration(data) {
     <div class="calibration-bars">${bars}</div>
     ${misses}
   `;
+}
+
+// ---------------------------------------------------------------- quiz history
+$("#btnQuizHistory").addEventListener("click", async () => {
+  const history = await api("/api/quizzes/history").then((r) => r.json());
+  $("#quizHistoryList").innerHTML = renderQuizHistory(history);
+  openDrawer($("#quizHistoryDrawer"));
+});
+
+function renderQuizHistory(history) {
+  if (!history.length) {
+    return `<div class="empty-note">No quizzes taken yet. Generate a quiz to see it here.</div>`;
+  }
+  return history.map((h) => {
+    const scoreDisplay = h.mode === "freeText" ? `${Math.round(h.score * 100)}%` : `${h.score} / ${h.total}`;
+    const correctPct = Math.round((h.correctCount / h.answerCount) * 100);
+    return `
+      <div class="review-item" style="cursor:pointer" data-attempt-id="${escapeHtml(h.id)}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-weight:600;font-size:13px">${scoreDisplay}</span>
+          <span style="font-size:11px;color:var(--ink-soft);font-family:var(--font-mono)">${new Date(h.createdAt).toLocaleString()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-soft)">
+          ${h.mode === "freeText" ? "Free-text" : "MCQ"} · ${h.correctCount}/${h.answerCount} correct (${correctPct}%)
+        </div>
+        <button class="btn btn-ghost" style="margin-top:8px;font-size:11.5px;padding:4px 10px;width:100%" data-view-results="${escapeHtml(h.id)}">View Results</button>
+      </div>`;
+  }).join("");
+}
+
+// Click handler for quiz history items — loads the attempt and shows results in the quiz overlay.
+document.addEventListener("click", async (e) => {
+  const viewBtn = e.target.closest("[data-view-results]");
+  if (viewBtn) {
+    const attemptId = viewBtn.dataset.viewResults;
+    await showHistoricQuizResults(attemptId);
+  }
+});
+
+async function showHistoricQuizResults(attemptId) {
+  try {
+    const res = await api(`/api/quizzes/attempts/${attemptId}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(`Could not load attempt: ${err.error || res.statusText}`);
+      return;
+    }
+    const attempt = await res.json();
+
+    // Populate currentAttempt and currentQuiz so renderQuizResults works.
+    currentAttempt = attempt;
+    currentQuiz = {
+      id: attempt.quizId,
+      mode: attempt.mode,
+      questions: attempt.quizQuestions || [],
+    };
+
+    closeDrawers();
+    openQuizOverlay();
+    renderQuizResults();
+  } catch (err) {
+    alert(`Error loading quiz results: ${err.message}`);
+  }
+}
+
+// ---------------------------------------------------------------- settings
+$("#btnSettings").addEventListener("click", async () => {
+  const settings = await api("/api/settings").then((r) => r.json());
+  $("#settingsBody").innerHTML = renderSettings(settings);
+  openDrawer($("#settingsDrawer"));
+});
+
+function renderSettings(s) {
+  return `
+    <div style="margin-bottom:20px">
+      <h4 style="margin:0 0 8px;font-size:14px">Manus API Configuration</h4>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Agent profile, concurrency limit, and API key override.</p>
+      <div style="font-size:12.5px;line-height:1.8">
+        <div><strong>Agent profile:</strong> ${escapeHtml(s.manusAgentProfile)}</div>
+        <div><strong>Max concurrent tasks:</strong> ${s.manusMaxConcurrentTasks}</div>
+        <div><strong>API base:</strong> ${escapeHtml(s.manusApiBase)}</div>
+        <div><strong>API key set:</strong> ${s.manusApiKeySet ? `Yes (${s.manusApiKeyLength} chars)` : "No"}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Override Manus API Key</label>
+      <input id="settingsApiKeyInput" type="password" placeholder="Paste new key…" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px" />
+      <button class="btn btn-primary btn-block" id="settingsSaveKeyBtn">Save Key (session only)</button>
+      <p style="font-size:11px;color:var(--ink-soft);margin-top:6px">This overrides the key in-memory only. It does NOT persist to .env and will be lost on server restart.</p>
+    </div>
+  `;
+}
+
+// Settings button handler is attached dynamically after render because the drawer body is rebuilt each time.
+document.addEventListener("click", async (e) => {
+  if (e.target.id === "settingsSaveKeyBtn") {
+    const input = $("#settingsApiKeyInput");
+    const key = input.value.trim();
+    if (!key) return;
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = "Saving…";
+    try {
+      const res = await api("/api/settings/manus-api-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        btn.textContent = "✓ Key saved";
+        btn.style.background = "var(--correct)";
+        btn.style.borderColor = "var(--correct)";
+        setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; btn.style.background = ""; btn.style.borderColor = ""; }, 2000);
+      } else {
+        btn.textContent = `✗ ${data.error}`;
+        btn.style.background = "var(--wrong)";
+        setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; btn.style.background = ""; }, 3000);
+      }
+    } catch (err) {
+      btn.textContent = "✗ Network error";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; }, 3000);
+    }
+  }
+});
+
+// ---------------------------------------------------------------- debug log
+$("#btnDebugLog").addEventListener("click", () => {
+  renderDebugLog();
+  openDrawer($("#debugLogDrawer"));
+});
+
+function renderDebugLog() {
+  if (!DEBUG_LOG.length) {
+    $("#debugLogBody").innerHTML = `<div class="empty-note">No API calls logged yet. Make a request to see it here.</div>`;
+    return;
+  }
+  const lines = DEBUG_LOG.map((e) => {
+    if (e.method) {
+      return `[${e.time}] → ${e.method} ${e.url}${e.body ? "\n  Body: " + e.body : ""}`;
+    }
+    if (e.error) {
+      return `[${e.time}] ✗ ${e.url}\n  Error: ${e.error} (${e.ms}ms)`;
+    }
+    return `[${e.time}] ← ${e.status} ${e.url} (${e.ms}ms)`;
+  }).join("\n\n");
+  $("#debugLogBody").textContent = lines;
+  // Scroll to bottom
+  const body = $("#debugLogBody");
+  body.scrollTop = body.scrollHeight;
 }
 
 // ---------------------------------------------------------------- dashboard — learning overview

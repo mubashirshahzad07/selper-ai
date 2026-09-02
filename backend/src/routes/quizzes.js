@@ -29,8 +29,10 @@ export function quizzesRouter() {
 
       let answers;
       if (isFreeText) {
-        // Grade each free-text answer via AI — sequentially to respect RPM limits.
-        // Promise.all would fire all calls at once and overwhelm the throttle queue.
+        // Grade each free-text answer via AI — sequentially, since each grading
+        // call is a full Manus agent task (seconds, not milliseconds). Promise.all
+        // would fire them all at once and either queue behind ai.js's concurrency
+        // pool anyway or risk hitting the account's concurrent-task cap.
         answers = [];
         for (const r of responses) {
           const q = quiz.questions[r.questionIndex];
@@ -98,6 +100,56 @@ export function quizzesRouter() {
       await db.save();
 
       res.json(database.attempts[attemptId]);
+    })
+  );
+
+  // ---------------------------------------------------------------------------
+  // GET /api/quizzes/history — list all quiz attempts for the current session,
+  // ordered newest-first. Returns lightweight summaries (no full question text)
+  // so the history view loads fast even with many past quizzes.
+  // ---------------------------------------------------------------------------
+  router.get(
+    "/history",
+    asyncRoute(async (req, res) => {
+      const database = await db.get();
+      const mine = Object.values(database.attempts)
+        .filter((a) => a.sessionId === req.sessionId)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      const summary = mine.map((a) => ({
+        id: a.id,
+        quizId: a.quizId,
+        documentId: a.documentId,
+        mode: a.mode,
+        score: a.score,
+        total: a.total,
+        createdAt: a.createdAt,
+        answerCount: a.answers.length,
+        correctCount: a.answers.filter((ans) => ans.isCorrect).length,
+      }));
+
+      res.json(summary);
+    })
+  );
+
+  // ---------------------------------------------------------------------------
+  // GET /api/attempts/:id — fetch a single graded attempt in full detail.
+  // Used by the quiz-history "View Results" button to re-display an old quiz.
+  // ---------------------------------------------------------------------------
+  router.get(
+    "/attempts/:id",
+    asyncRoute(async (req, res) => {
+      const database = await db.get();
+      const attempt = database.attempts[req.params.id];
+      assertOwnership(attempt, req, "Attempt");
+
+      // Also include the original quiz questions so the results view has context.
+      const quiz = database.quizzes[attempt.quizId];
+
+      res.json({
+        ...attempt,
+        quizQuestions: quiz ? quiz.questions : [],
+      });
     })
   );
 

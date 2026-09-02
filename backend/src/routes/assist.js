@@ -9,7 +9,7 @@ export function assistRouter() {
   const router = express.Router();
 
   // ---------------------------------------------------------------------------
-  // Right-click: word definition (Gemini resolves sense from context -> Wikipedia
+  // Right-click: word definition (Manus resolves sense from context -> Wikipedia
   // supplies the definition). No Urdu translation here — that's a separate action.
   // ---------------------------------------------------------------------------
   router.post(
@@ -23,7 +23,7 @@ export function assistRouter() {
       const sense = await resolveWordSense(word, context);
 
       // Wikipedia stays as an optional deep-dive reference; the primary answer is
-      // the concise Gemini definition so the card reads like a chat reply.
+      // the concise Manus definition so the card reads like a chat reply.
       let wikipedia = null;
       try {
         wikipedia = await fetchWikipediaDefinition(sense.searchTitle || word);
