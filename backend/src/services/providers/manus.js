@@ -16,11 +16,9 @@ import fetch from "node-fetch";
 
 const API_BASE = process.env.MANUS_API_BASE || "https://api.manus.ai/v2";
 
-// "lite" is Manus's stable alias for its lightweight agent tier — currently
-// Manus Lite 1.6. Versioned aliases like "1.6-lite" are also accepted by the
-// API but the version segment is ignored (you can't pin a specific point
-// version independently), so "lite" is the correct, forward-compatible value.
-const DEFAULT_AGENT_PROFILE = process.env.MANUS_AGENT_PROFILE || "lite";
+// Valid values per Manus API v2 docs: "manus-1.6", "manus-1.6-lite", "manus-1.6-max".
+// task.create defaults to "manus-1.6" if omitted.
+const DEFAULT_AGENT_PROFILE = process.env.MANUS_AGENT_PROFILE || "manus-1.6-lite";
 
 function apiKey() {
   const key = process.env.MANUS_API_KEY;
@@ -36,30 +34,6 @@ function apiKey() {
 
 function authHeaders() {
   return { "Content-Type": "application/json", "x-manus-api-key": apiKey() };
-}
-
-/**
- * Convert our lowercase JSON-Schema-style schemas into Manus's expected format.
- * Manus v2 appears to use OpenAPI 3.0 Schema objects with uppercase Type enums,
- * similar to Gemini. This mirrors the toGeminiSchema() conversion.
- */
-function toManusSchema(schema) {
-  if (!schema || typeof schema !== "object") return schema;
-
-  const out = { type: String(schema.type || "object").toUpperCase() };
-  if (schema.description) out.description = schema.description;
-  if (schema.enum) out.enum = schema.enum;
-
-  if (schema.properties) {
-    out.properties = {};
-    for (const [key, value] of Object.entries(schema.properties)) {
-      out.properties[key] = toManusSchema(value);
-    }
-  }
-  if (schema.required) out.required = schema.required;
-  if (schema.items) out.items = toManusSchema(schema.items);
-
-  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,13 +88,15 @@ async function createTask({ prompt, schema = null, agentProfile = null }) {
   // Enforce Manus's 10/min task.create rate limit before making the call.
   await waitForRateLimit();
 
+  const content = [{ type: "text", text: prompt }];
+
   const body = {
-    message: { content: prompt },
+    message: { content },
     agent_profile: agentProfile || DEFAULT_AGENT_PROFILE,
   };
-  if (schema) body.structured_output_schema = toManusSchema(schema);
+  if (schema) body.structured_output_schema = schema;
 
-  console.log("[Manus] task.create payload:", JSON.stringify({ ...body, message: { content: prompt.slice(0, 100) + "..." } }, null, 2));
+  console.log("[Manus] task.create payload:", JSON.stringify({ ...body, message: { content: [{ type: "text", text: prompt.slice(0, 100) + "..." }] } }, null, 2));
 
   const res = await fetch(`${API_BASE}/task.create`, {
     method: "POST",

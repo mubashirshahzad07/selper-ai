@@ -148,10 +148,12 @@ const MCQ_QUIZ_SCHEMA = {
           explanation: { type: "string" },
         },
         required: ["question", "topic", "options", "correctIndex", "explanation"],
+        additionalProperties: false,
       },
     },
   },
   required: ["questions"],
+  additionalProperties: false,
 };
 
 const FREE_TEXT_QUIZ_SCHEMA = {
@@ -168,10 +170,12 @@ const FREE_TEXT_QUIZ_SCHEMA = {
           gradingCriteria: { type: "array", items: { type: "string" } },
         },
         required: ["question", "topic", "modelAnswer", "gradingCriteria"],
+        additionalProperties: false,
       },
     },
   },
   required: ["questions"],
+  additionalProperties: false,
 };
 
 export async function generateQuiz(sourceText, count = 5, mode = "mcq") {
@@ -227,6 +231,7 @@ const FOLLOW_UP_SCHEMA = {
     explanation: { type: "string" },
   },
   required: ["question", "options", "correctIndex", "explanation"],
+  additionalProperties: false,
 };
 
 export async function generateFollowUpQuestion(sourceText, originalQuestion) {
