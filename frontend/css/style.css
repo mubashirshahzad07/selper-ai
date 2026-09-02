@@ -201,9 +201,21 @@ button { font-family: inherit; cursor: pointer; }
 .pdf-page-wrap { position: relative; }
 .pdf-text-layer {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  line-height: 1; opacity: .001; /* selectable, effectively invisible over canvas */
+  line-height: 1;
 }
-.pdf-text-layer span { position: absolute; white-space: pre; cursor: text; user-select: text; }
+.pdf-text-layer span {
+  position: absolute; white-space: pre; cursor: text; user-select: text;
+  color: rgba(28, 27, 34, 0.05);
+}
+/* Hide ghost text inside the browser's native selection — only show the blue box. */
+.pdf-text-layer span::selection {
+  color: transparent;
+  background: rgba(59, 63, 224, 0.30);
+}
+/* Debug: toggle ghost text to visible via topbar 👁 Ghost button. */
+html.ghost-text-visible .pdf-text-layer span {
+  color: rgba(28, 27, 34, 0.5);
+}
 
 /* image viewer mirrors the PDF page wrap so right-click OCR words work */
 .image-page-wrap {
@@ -236,7 +248,8 @@ button { font-family: inherit; cursor: pointer; }
   user-select: text;
   display: flex;
   align-items: center;
-  color: transparent;
+  /* Make text faintly visible so native browser selection creates a visible blue highlight. */
+  color: rgba(28, 27, 34, 0.15);
   pointer-events: auto;
   z-index: 3;
 }
@@ -245,6 +258,19 @@ button { font-family: inherit; cursor: pointer; }
   color: rgba(28, 27, 34, 0.35);
   background: rgba(217, 166, 46, 0.12);
   border-radius: 3px;
+}
+/* Visual highlight for click-drag selected OCR words — matches the amber
+   right-click highlight but slightly more opaque so the selection is obvious. */
+.image-text-layer span.ocr-selected {
+  color: rgba(28, 27, 34, 0.55);
+  background: rgba(217, 166, 46, 0.30);
+  border-radius: 3px;
+  outline: 1px solid rgba(217, 166, 46, 0.50);
+}
+/* Ensure the browser's native ::selection (blue highlight) is visible over our faint text. */
+.image-text-layer span::selection {
+  background: rgba(59, 63, 224, 0.35);
+  color: rgba(28, 27, 34, 0.7);
 }
 
 .text-view {

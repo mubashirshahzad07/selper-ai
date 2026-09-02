@@ -279,6 +279,91 @@ function appendOcrSpans(layerEl, words) {
     span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, null));
     layerEl.appendChild(span);
   }
+
+  // Add click-drag selection support for multi-word selections across spans.
+  let isDragging = false;
+  let dragStartSpan = null;
+  const selectedSpans = new Set();
+
+  function clearSelection() {
+    selectedSpans.forEach((s) => s.classList.remove("ocr-selected"));
+    selectedSpans.clear();
+  }
+
+  layerEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return; // only left-click
+    const span = e.target.closest("span");
+    if (!span) return;
+    isDragging = true;
+    dragStartSpan = span;
+    clearSelection();
+    span.classList.add("ocr-selected");
+    selectedSpans.add(span);
+    // Don't preventDefault — let the browser create a native text selection
+    // so users see the standard blue highlight. We add our amber overlay on top.
+  });
+
+  layerEl.addEventListener("mousemove", (e) => {
+    if (!isDragging || !dragStartSpan) return;
+    const span = e.target.closest("span");
+    if (!span) return;
+    clearSelection();
+
+    // Get all spans in reading order (DOM order matches OCR order).
+    const allSpans = Array.from(layerEl.querySelectorAll("span"));
+    const startIdx = allSpans.indexOf(dragStartSpan);
+    const endIdx = allSpans.indexOf(span);
+    if (startIdx === -1 || endIdx === -1) return;
+
+    const min = Math.min(startIdx, endIdx);
+    const max = Math.max(startIdx, endIdx);
+    for (let i = min; i <= max; i++) {
+      allSpans[i].classList.add("ocr-selected");
+      selectedSpans.add(allSpans[i]);
+    }
+  });
+
+  function finishDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (selectedSpans.size > 0 && dragStartSpan) {
+      const allSpans = Array.from(layerEl.querySelectorAll("span"));
+      const startIdx = allSpans.indexOf(dragStartSpan);
+      const endIdx = allSpans.indexOf(e?.target?.closest?.("span") || dragStartSpan);
+      const min = Math.min(startIdx, endIdx >= 0 ? endIdx : startIdx);
+      const max = Math.max(startIdx, endIdx >= 0 ? endIdx : startIdx);
+
+      const selectedWords = [];
+      for (let i = min; i <= max; i++) {
+        selectedWords.push(allSpans[i].textContent);
+      }
+      const selectedText = selectedWords.join(" ");
+
+      // Build surrounding context from nearby words.
+      const contextStart = Math.max(0, min - 30);
+      const contextEnd = Math.min(allSpans.length - 1, max + 30);
+      const contextWords = [];
+      for (let i = contextStart; i <= contextEnd; i++) {
+        contextWords.push(allSpans[i].textContent);
+      }
+      const context = contextWords.join(" ");
+
+      state.pendingSelection = {
+        type: "passage",
+        text: selectedText,
+        context,
+        anchorEl: dragStartSpan,
+      };
+    }
+
+    dragStartSpan = null;
+  }
+
+  layerEl.addEventListener("mouseup", finishDrag);
+  layerEl.addEventListener("mouseleave", () => {
+    if (isDragging) finishDrag(null);
+  });
 }
 
 /**
@@ -437,6 +522,68 @@ function buildWordLayer(layerEl, textContent, viewport) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Global PDF custom selection highlight — drawn as a blue overlay div since
+// ::selection doesn't render over opacity:0.001 text layers. Uses event
+// delegation so it works across all pages and survives re-renders (zoom, etc.).
+// ---------------------------------------------------------------------------
+let pdfSelRect = null;
+
+function updatePdfSelectionHighlight() {
+  if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+
+  // Find which PDF text layer contains the selection anchor.
+  const anchorNode = sel.anchorNode;
+  const textLayer = anchorNode?.closest?.(".pdf-text-layer");
+  if (!textLayer) return;
+
+  const range = sel.getRangeAt(0);
+  const rects = range.getClientRects();
+  if (!rects.length) return;
+
+  pdfSelRect = document.createElement("div");
+  pdfSelRect.className = "pdf-custom-selection";
+  pdfSelRect.style.position = "absolute";
+  pdfSelRect.style.zIndex = "2";
+  pdfSelRect.style.pointerEvents = "none";
+
+  const wrapRect = textLayer.parentElement.getBoundingClientRect();
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i];
+    if (r.width < 1 || r.height < 1) continue;
+    minX = Math.min(minX, r.left - wrapRect.left);
+    minY = Math.min(minY, r.top - wrapRect.top);
+    maxX = Math.max(maxX, r.right - wrapRect.left);
+    maxY = Math.max(maxY, r.bottom - wrapRect.top);
+  }
+  if (minX === Infinity) { pdfSelRect.remove(); pdfSelRect = null; return; }
+
+  pdfSelRect.style.left = `${minX}px`;
+  pdfSelRect.style.top = `${minY}px`;
+  pdfSelRect.style.width = `${maxX - minX}px`;
+  pdfSelRect.style.height = `${maxY - minY}px`;
+  textLayer.appendChild(pdfSelRect);
+}
+
+// Single global listener — no per-page binding needed.
+document.addEventListener("mouseup", () => {
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed && sel.anchorNode?.closest?.(".pdf-text-layer")) {
+    updatePdfSelectionHighlight();
+  }
+});
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) {
+    if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
+  } else if (sel.anchorNode?.closest?.(".pdf-text-layer")) {
+    updatePdfSelectionHighlight();
+  }
+});
+
 function surroundingContextFor(word, layerEl) {
   // Grab nearby word spans' text as a crude context window.
   const container = layerEl?.parentElement || document;
@@ -447,16 +594,34 @@ function surroundingContextFor(word, layerEl) {
 function onWordContextMenu(e, span, textContent) {
   e.preventDefault();
 
-  const word = span.dataset.word;
-  if (!word) return;
+  // Check if there's an active browser text selection within the PDF text layer.
+  // Capture it BEFORE the context menu clears the selection.
+  const sel = window.getSelection();
+  const selectedText = sel?.toString()?.trim();
+  const hasPdfSelection = selectedText && selectedText.length > 0 && sel.anchorNode?.closest?.(".pdf-text-layer");
 
-  paintHighlight(span);
+  if (hasPdfSelection) {
+    // Preserve the passage selection — don't let single-word right-click overwrite it.
+    if (!state.pendingSelection || state.pendingSelection.type !== "passage") {
+      const layerEl = sel.anchorNode.closest(".pdf-text-layer");
+      const context = surroundingContextFor(selectedText.split(/\s+/)[0], layerEl);
+      state.pendingSelection = { type: "passage", text: selectedText, context, anchorEl: sel.getRangeAt(0).cloneRange() };
+    }
+    openContextMenu(e.clientX, e.clientY, { showSummarize: true });
+    return;
+  }
 
-  const context = surroundingContextFor(word, span.parentElement);
+  // Single-word right-click: only set pendingSelection if no passage is already selected.
+  if (!state.pendingSelection || state.pendingSelection.type !== "passage") {
+    const word = span.dataset.word;
+    if (!word) return;
 
-  // Store the live span, not a one-time rect — Range/Element.getBoundingClientRect()
-  // stays accurate as the page scrolls, letting the popup track the word.
-  state.pendingSelection = { type: "word", text: word, context, anchorEl: span };
+    paintHighlight(span);
+
+    const context = surroundingContextFor(word, span.parentElement);
+
+    state.pendingSelection = { type: "word", text: word, context, anchorEl: span };
+  }
   openContextMenu(e.clientX, e.clientY, { showSummarize: false });
 }
 
@@ -1019,6 +1184,14 @@ document.addEventListener("click", async (e) => {
 $("#btnDebugLog").addEventListener("click", () => {
   renderDebugLog();
   openDrawer($("#debugLogDrawer"));
+});
+
+// Toggle PDF ghost text visibility for debugging.
+let ghostTextVisible = false;
+$("#btnToggleGhostText").addEventListener("click", () => {
+  ghostTextVisible = !ghostTextVisible;
+  document.documentElement.classList.toggle("ghost-text-visible", ghostTextVisible);
+  $("#btnToggleGhostText").style.background = ghostTextVisible ? "var(--accent-ink)" : "";
 });
 
 function renderDebugLog() {
