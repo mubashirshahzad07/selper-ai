@@ -1,7 +1,7 @@
 // backend/src/services/extraction.js
 // Text-extraction concerns in one place, separate from raw AI calls (ai.js)
 // and raw route handling. Two sources: PDF text layers (pdf-parse, no AI) and
-// image OCR (Manus vision, delegated to ai.js — returns word-level bounding
+// image OCR (Gemini vision, delegated to ai.js — returns word-level bounding
 // boxes too, so the frontend can build a selectable word layer over images
 // the same way it does for PDF pages).
 
@@ -20,11 +20,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
   nodeRequire.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs")
 ).href;
 
-// Rasterisation budget for scanned-PDF OCR. One Manus agent-task call per
-// page is expensive (both in cost and in wall-clock time — each is a full
-// async task, not a quick completion), so cap the pages we process and
-// render at a width that is large enough for OCR without blowing up
-// tokens/time.
+// Rasterisation budget for scanned-PDF OCR. One Gemini vision call per page is
+// expensive, so cap the pages we process and render at a width that is large
+// enough for OCR without blowing up tokens/time.
 const SCANNED_MAX_PAGES = 20;
 const SCANNED_TARGET_WIDTH = 1200;
 
@@ -56,7 +54,7 @@ export async function extractPdfText(buffer) {
 }
 
 /**
- * Extract text + word bounding boxes from an image via Manus vision OCR.
+ * Extract text + word bounding boxes from an image via Gemini vision OCR.
  * Returns { text, words } — words is [{ text, bbox: {x,y,w,h} }] normalised
  * 0-1 relative to the image dimensions, or [] if none were recoverable.
  * Throws on failure — callers decide whether that should fail the whole
@@ -249,7 +247,7 @@ function getImageObject(page, name, timeoutMs = 8000) {
  *   - text only                -> skipped (nothing to OCR)
  * Returns { pages: { "1": { text, words, hasNativeText, images? } }, fullText }
  * where every word bbox is normalised 0-1 relative to the PAGE, so the frontend
- * can drop them straight into the page's text layer. Manus agent-task calls are capped.
+ * can drop them straight into the page's text layer. Gemini vision calls are capped.
  */
 export async function extractScannedPdfText(buffer, { maxPages = SCANNED_MAX_PAGES } = {}) {
   const doc = await pdfjsLib.getDocument({
@@ -261,7 +259,7 @@ export async function extractScannedPdfText(buffer, { maxPages = SCANNED_MAX_PAG
 
   const pages = {};
   const textParts = [];
-  let manusCalls = 0;
+  let geminiCalls = 0;
 
   try {
     const count = Math.min(doc.numPages, maxPages);
@@ -277,8 +275,8 @@ export async function extractScannedPdfText(buffer, { maxPages = SCANNED_MAX_PAG
 
       if (textItems === 0) {
         // Fully scanned/rasterized page -> one full-page vision call.
-        if (manusCalls < SCANNED_MAX_PAGES) {
-          manusCalls++;
+        if (geminiCalls < SCANNED_MAX_PAGES) {
+          geminiCalls++;
           const r = await safeOcr(await renderPageToPngBase64(page));
           pages[n] = { text: r.text, words: r.words, hasNativeText: false };
           if (r.text) textParts.push(r.text);
@@ -290,14 +288,14 @@ export async function extractScannedPdfText(buffer, { maxPages = SCANNED_MAX_PAG
           const images = [];
           const pageWords = [];
           for (const b of blocks) {
-            if (manusCalls >= SCANNED_MAX_PAGES) break;
+            if (geminiCalls >= SCANNED_MAX_PAGES) break;
             let imgObj = b.inline || null;
             if (!imgObj && b.name) {
               imgObj = await getImageObject(page, b.name);
             }
             const canvas = imageObjectToCanvas(imgObj);
             if (!canvas) continue;
-            manusCalls++;
+            geminiCalls++;
             const r = await safeOcr(canvasToPngBase64(canvas));
             // Map image-relative word boxes onto the page using the block rect.
             for (const w of r.words || []) {

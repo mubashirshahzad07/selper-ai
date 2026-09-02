@@ -29,10 +29,9 @@ export function quizzesRouter() {
 
       let answers;
       if (isFreeText) {
-        // Grade each free-text answer via AI — sequentially, since each grading
-        // call is a full Manus agent task (seconds, not milliseconds). Promise.all
-        // would fire them all at once and either queue behind ai.js's concurrency
-        // pool anyway or risk hitting the account's concurrent-task cap.
+        // Grade each free-text answer via AI (Gemini) — sequentially to respect
+        // Gemini's rate limits. Promise.all would fire all calls at once and
+        // risk overwhelming them.
         answers = [];
         for (const r of responses) {
           const q = quiz.questions[r.questionIndex];

@@ -942,8 +942,26 @@ $("#btnSettings").addEventListener("click", async () => {
 function renderSettings(s) {
   return `
     <div style="margin-bottom:20px">
+      <h4 style="margin:0 0 8px;font-size:14px">Gemini API Configuration</h4>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">OCR, definitions, translate, summarize, key terms, and free-text grading.</p>
+      <div style="font-size:12.5px;line-height:1.8">
+        <div><strong>Model:</strong> ${escapeHtml(s.geminiModel)}</div>
+        <div><strong>API base:</strong> ${escapeHtml(s.geminiApiBase)}</div>
+        <div><strong>API key set:</strong> ${s.geminiApiKeySet ? `Yes (${s.geminiApiKeyLength} chars)` : "No"}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Override Gemini API Key</label>
+      <input id="settingsGeminiKeyInput" type="password" placeholder="Paste new key…" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px" />
+      <button class="btn btn-primary btn-block" id="settingsSaveGeminiKeyBtn" data-provider="gemini">Save Key (session only)</button>
+      <p style="font-size:11px;color:var(--ink-soft);margin-top:6px">This overrides the key in-memory only. It does NOT persist to .env and will be lost on server restart.</p>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--hairline);margin:0 0 20px" />
+
+    <div style="margin-bottom:20px">
       <h4 style="margin:0 0 8px;font-size:14px">Manus API Configuration</h4>
-      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Agent profile, concurrency limit, and API key override.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Quiz generation. Agent profile, concurrency limit, and API key override.</p>
       <div style="font-size:12.5px;line-height:1.8">
         <div><strong>Agent profile:</strong> ${escapeHtml(s.manusAgentProfile)}</div>
         <div><strong>Max concurrent tasks:</strong> ${s.manusMaxConcurrentTasks}</div>
@@ -953,43 +971,47 @@ function renderSettings(s) {
     </div>
     <div style="margin-bottom:20px">
       <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Override Manus API Key</label>
-      <input id="settingsApiKeyInput" type="password" placeholder="Paste new key…" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px" />
-      <button class="btn btn-primary btn-block" id="settingsSaveKeyBtn">Save Key (session only)</button>
+      <input id="settingsManusKeyInput" type="password" placeholder="Paste new key…" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px" />
+      <button class="btn btn-primary btn-block" id="settingsSaveManusKeyBtn" data-provider="manus">Save Key (session only)</button>
       <p style="font-size:11px;color:var(--ink-soft);margin-top:6px">This overrides the key in-memory only. It does NOT persist to .env and will be lost on server restart.</p>
     </div>
   `;
 }
 
-// Settings button handler is attached dynamically after render because the drawer body is rebuilt each time.
+// Settings button handlers are attached dynamically after render because the drawer body is rebuilt each time.
+// One shared handler for both provider key inputs, keyed off data-provider.
 document.addEventListener("click", async (e) => {
-  if (e.target.id === "settingsSaveKeyBtn") {
-    const input = $("#settingsApiKeyInput");
-    const key = input.value.trim();
-    if (!key) return;
-    const btn = e.target;
-    btn.disabled = true;
-    btn.textContent = "Saving…";
-    try {
-      const res = await api("/api/settings/manus-api-key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: key }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        btn.textContent = "✓ Key saved";
-        btn.style.background = "var(--correct)";
-        btn.style.borderColor = "var(--correct)";
-        setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; btn.style.background = ""; btn.style.borderColor = ""; }, 2000);
-      } else {
-        btn.textContent = `✗ ${data.error}`;
-        btn.style.background = "var(--wrong)";
-        setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; btn.style.background = ""; }, 3000);
-      }
-    } catch (err) {
-      btn.textContent = "✗ Network error";
-      setTimeout(() => { btn.disabled = false; btn.textContent = "Save Key (session only)"; }, 3000);
+  const btn = e.target.closest("#settingsSaveGeminiKeyBtn, #settingsSaveManusKeyBtn");
+  if (!btn) return;
+
+  const provider = btn.dataset.provider; // "gemini" | "manus"
+  const input = provider === "gemini" ? $("#settingsGeminiKeyInput") : $("#settingsManusKeyInput");
+  const key = input.value.trim();
+  if (!key) return;
+
+  const originalLabel = "Save Key (session only)";
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+  try {
+    const res = await api(`/api/settings/${provider}-api-key`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey: key }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      btn.textContent = "✓ Key saved";
+      btn.style.background = "var(--correct)";
+      btn.style.borderColor = "var(--correct)";
+      setTimeout(() => { btn.disabled = false; btn.textContent = originalLabel; btn.style.background = ""; btn.style.borderColor = ""; }, 2000);
+    } else {
+      btn.textContent = `✗ ${data.error}`;
+      btn.style.background = "var(--wrong)";
+      setTimeout(() => { btn.disabled = false; btn.textContent = originalLabel; btn.style.background = ""; }, 3000);
     }
+  } catch (err) {
+    btn.textContent = "✗ Network error";
+    setTimeout(() => { btn.disabled = false; btn.textContent = originalLabel; }, 3000);
   }
 });
 
@@ -1249,7 +1271,9 @@ async function startQuiz(count, mode) {
     openQuizOverlay();
     renderQuizQuestion();
   } catch (err) {
-    $("#quizSummaryArea").innerHTML = `<div class="empty-note">${escapeHtml(err.message)}</div>`;
+    const needsKey = /MANUS_API_KEY/i.test(err.message);
+    const hint = needsKey ? `<br><span style="color:var(--ink-soft)">Add your Manus key to <code>.env</code> and restart the server.</span>` : "";
+    $("#quizSummaryArea").innerHTML = `<div class="empty-note">${escapeHtml(err.message)}${hint}</div>`;
   }
 }
 

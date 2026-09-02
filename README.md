@@ -1,6 +1,9 @@
 # Study Helper
 
-Source-preserving AI study workspace — Gemini-only, hosted-first (Alibaba AI Hackathon, Education track).
+Source-preserving AI study workspace — hosted-first (Alibaba AI Hackathon, Education track).
+Uses two AI providers: Gemini for OCR and Definitions (word lookup, translate, summarize, key
+terms, free-text grading), Manus for Quiz Generation. See the top of `backend/src/services/ai.js`
+for the full provider-split rationale.
 
 ## Layout (backend/frontend split)
 
@@ -13,7 +16,7 @@ study-helper/
 │   ├── src/
 │   │   ├── index.js         entry point: mounts routers, CORS, session middleware
 │   │   ├── routes/          one file per resource — documents, assist, doubts, quizzes, review, calibration
-│   │   ├── services/        ai.js (Gemini), wikipedia.js, extraction.js, reviewQueue.js, spacedRepetition.js, calibration.js
+│   │   ├── services/        ai.js (Gemini + Manus routing), providers/gemini.js, providers/manus.js, wikipedia.js, extraction.js, reviewQueue.js, spacedRepetition.js, calibration.js
 │   │   ├── repositories/    store.js — the JSON-file persistence layer
 │   │   └── middleware/      session.js — guest session issuance/ownership checks
 │   ├── data/                db.json lives here (gitignored)
@@ -42,7 +45,7 @@ Two terminals, two `npm install`s — they're independent projects now.
 cd backend
 npm install
 cp .env.example .env
-# edit .env — paste your Gemini key, and (optionally) restrict FRONTEND_ORIGIN
+# edit .env — paste your Gemini key AND your Manus key, and (optionally) restrict FRONTEND_ORIGIN
 npm start
 ```
 Runs on `http://localhost:3000` by default.
@@ -102,8 +105,10 @@ in this sandbox — not just a syntax check:
 ## What's carried over unverified
 
 Same caveat as before the restructuring: this sandbox can't reach Google's or Wikipedia's APIs, so
-the actual Gemini-backed calls (definitions, summaries, quiz generation, OCR, key terms) are
-correct against their documented shape but not live-tested here. Everything AI-independent —
+Same caveat as before the restructuring: this sandbox can't reach Google's, Manus's, or
+Wikipedia's APIs, so the actual provider-backed calls — Gemini (definitions, summaries,
+translation, key terms, OCR, free-text grading) and Manus (quiz generation, follow-up questions) —
+are correct against their documented shapes but not live-tested here. Everything AI-independent —
 uploads, extraction pipeline wiring, sessions, doubts, review-queue math, spaced repetition,
 calibration, and now the full cross-origin plumbing — has been.
 

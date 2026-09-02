@@ -1,7 +1,7 @@
 {
   "name": "study-helper-backend",
   "version": "1.0.0",
-  "description": "Study Helper API — Gemini-only, hosted-first. Serves /api/* and /uploads/*; the frontend is a separate static app (../frontend).",
+  "description": "Study Helper API — Gemini (OCR + Definitions) + Manus (Quiz Generation), hosted-first. Serves /api/* and /uploads/*; the frontend is a separate static app (../frontend).",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
