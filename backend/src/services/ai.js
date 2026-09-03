@@ -55,9 +55,9 @@ export async function extractKeyTerms(sourceText) {
 Be concise — each "why" explanation should be one short sentence (max 15 words).
 
 MATERIAL:
-"""${sourceText.slice(0, 8000)}"""`;
+"""${sourceText.slice(0, 6000)}"""`;
 
-  const { value } = await geminiComplete({ prompt, schema: KEY_TERMS_SCHEMA, timeoutMs: 20000, maxOutputTokens: 512 });
+  const { value } = await geminiCompleteWithRetry({ prompt, schema: KEY_TERMS_SCHEMA, timeoutMs: 18000, maxOutputTokens: 512 }, 1);
   return value.terms ?? [];
 }
 
@@ -74,16 +74,33 @@ const WORD_SENSE_SCHEMA = {
   required: ["searchTitle", "sense", "definition"],
 };
 
+// Short-lived in-memory cache for word definitions (same word + context hash).
+// Avoids repeat Gemini calls when a student re-looks-up the same term.
+const senseCache = new Map();
+const SENSE_CACHE_MAX = 80;
+
+function senseCacheKey(word, context) {
+  return `${word.toLowerCase()}|${(context || "").slice(0, 200)}`;
+}
+
 export async function resolveWordSense(word, surroundingContext) {
+  const key = senseCacheKey(word, surroundingContext);
+  if (senseCache.has(key)) return senseCache.get(key);
+
   const prompt = `A student right-clicked the word "${word}" while reading the passage below.
 1. Determine the single most likely intended sense of this word IN THIS CONTEXT, phrased as a
    short Wikipedia-searchable article title (e.g. "Return statement" not "return").
 2. Write a concise definition — 1-2 sentences max, no essay.
 
 PASSAGE:
-"""${surroundingContext.slice(0, 1500)}"""`;
+"""${surroundingContext.slice(0, 1200)}"""`;
 
-  const { value } = await geminiComplete({ prompt, schema: WORD_SENSE_SCHEMA, timeoutMs: 15000, maxOutputTokens: 256 });
+  const { value } = await geminiCompleteWithRetry({ prompt, schema: WORD_SENSE_SCHEMA, timeoutMs: 12000, maxOutputTokens: 256 }, 1);
+  if (senseCache.size >= SENSE_CACHE_MAX) {
+    const oldest = senseCache.keys().next().value;
+    senseCache.delete(oldest);
+  }
+  senseCache.set(key, value);
   return value;
 }
 
@@ -101,9 +118,9 @@ export async function translateToUrdu(text) {
 Keep the translation concise — match the original length closely.
 
 TEXT:
-"""${text.slice(0, 3000)}"""`;
+"""${text.slice(0, 2500)}"""`;
 
-  const { value } = await geminiComplete({ prompt, schema: URDU_SCHEMA, timeoutMs: 20000, maxOutputTokens: 512 });
+  const { value } = await geminiCompleteWithRetry({ prompt, schema: URDU_SCHEMA, timeoutMs: 15000, maxOutputTokens: 512 }, 1);
   return value.urdu ?? "";
 }
 
@@ -121,12 +138,12 @@ export async function summarizePassage(passage, surroundingContext) {
 Be concise — do not exceed 3 sentences. Ground strictly in the source material.
 
 SURROUNDING CONTEXT:
-"""${surroundingContext.slice(0, 2000)}"""
+"""${surroundingContext.slice(0, 1500)}"""
 
 SELECTED PASSAGE:
-"""${passage.slice(0, 2000)}"""`;
+"""${passage.slice(0, 1500)}"""`;
 
-  const { value } = await geminiComplete({ prompt, schema: SUMMARY_SCHEMA, timeoutMs: 15000, maxOutputTokens: 256 });
+  const { value } = await geminiCompleteWithRetry({ prompt, schema: SUMMARY_SCHEMA, timeoutMs: 12000, maxOutputTokens: 256 }, 1);
   return value.summary ?? "";
 }
 

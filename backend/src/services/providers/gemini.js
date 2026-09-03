@@ -108,7 +108,12 @@ export async function geminiComplete({ prompt, schema = null, imageData = null, 
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    const err = new Error(`Gemini generateContent failed: ${res.status} ${text}`);
+    let detail = text.slice(0, 400);
+    try {
+      const parsed = JSON.parse(text);
+      detail = parsed?.error?.message || parsed?.message || detail;
+    } catch { /* keep raw slice */ }
+    const err = new Error(`Gemini generateContent failed (${res.status}): ${detail}`);
     err.status = res.status;
     throw err;
   }
@@ -117,7 +122,12 @@ export async function geminiComplete({ prompt, schema = null, imageData = null, 
   const candidate = data.candidates?.[0];
 
   if (!candidate) {
-    throw new Error("Gemini returned no candidates (likely blocked by safety filters).");
+    const block = data.promptFeedback?.blockReason;
+    throw new Error(
+      block
+        ? `Gemini blocked the request (${block}). Try a different selection.`
+        : "Gemini returned no candidates (likely blocked by safety filters)."
+    );
   }
   if (candidate.finishReason && candidate.finishReason !== "STOP" && candidate.finishReason !== "MAX_TOKENS") {
     throw new Error(`Gemini stopped early: ${candidate.finishReason}`);
@@ -130,7 +140,13 @@ export async function geminiComplete({ prompt, schema = null, imageData = null, 
   try {
     return { value: JSON.parse(text) };
   } catch {
-    throw new Error(`Gemini's structured response was not valid JSON: ${text.slice(0, 200)}`);
+    // Some models occasionally wrap JSON in markdown fences — strip and retry once.
+    const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    try {
+      return { value: JSON.parse(cleaned) };
+    } catch {
+      throw new Error(`Gemini's structured response was not valid JSON: ${text.slice(0, 200)}`);
+    }
   }
 }
 
@@ -148,13 +164,14 @@ export async function geminiCompleteWithRetry(opts, maxRetries = 2) {
       lastErr = err;
       // Don't retry on client errors (4xx) — bad request/blocked content
       // won't fix itself, except 429 (rate limit) which is worth a backoff.
+      // Also don't retry missing API key.
+      if (err.code === "NO_API_KEY") throw err;
       if (err.status && err.status < 500 && err.status !== 429) throw err;
       console.warn(`[AI] Gemini call failed (attempt ${attempt + 1}/${maxRetries + 1}): ${err.message}`);
       if (attempt < maxRetries) {
-        // Exponential backoff: 2s, 6s, 18s... (shorter than Manus's since
-        // Gemini calls are already fast — a stuck call is more likely
-        // transient than a genuinely slow agent task).
-        await new Promise((r) => setTimeout(r, 2000 * Math.pow(3, attempt)));
+        // Fast backoff for interactive calls: 800ms, then 2s — keeps latency low
+        // while still recovering from brief rate-limits / 5xx blips.
+        await new Promise((r) => setTimeout(r, 800 * Math.pow(2.5, attempt)));
       }
     }
   }

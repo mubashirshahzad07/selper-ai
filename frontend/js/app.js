@@ -22,6 +22,37 @@ function pushDebugLog(entry) {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+// ---------------------------------------------------------------- theme (light / dark)
+const THEME_KEY = "studyHelperTheme";
+function applyTheme(theme) {
+  const t = theme === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", t);
+  const btn = $("#btnThemeToggle");
+  if (btn) {
+    btn.textContent = t === "dark" ? "☀" : "☾";
+    btn.title = t === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  }
+  try { localStorage.setItem(THEME_KEY, t); } catch (_) { /* ignore */ }
+}
+function initTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch (_) { /* ignore */ }
+  if (stored === "dark" || stored === "light") {
+    applyTheme(stored);
+  } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    applyTheme("dark");
+  } else {
+    applyTheme("light");
+  }
+}
+initTheme();
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#btnThemeToggle")) {
+    const current = document.documentElement.getAttribute("data-theme") || "light";
+    applyTheme(current === "dark" ? "light" : "dark");
+  }
+});
+
 // ---------------------------------------------------------------- backend origin
 // The backend is a separate app/origin now (see frontend/js/config.js). Every
 // backend-bound URL — API calls AND asset URLs like uploaded file paths —
@@ -65,7 +96,12 @@ async function api(url, options = {}) {
     return res;
   } catch (err) {
     pushDebugLog({ time: new Date().toISOString(), error: err.message, ms: Date.now() - t0, url: fullUrl });
-    throw err;
+    const msg = /Failed to fetch|NetworkError|Load failed/i.test(err.message)
+      ? `Cannot reach the backend at ${API_BASE || "(no API base set)"}. Is it running?`
+      : err.message;
+    const e = new Error(msg);
+    e.cause = err;
+    throw e;
   }
 }
 
@@ -921,11 +957,11 @@ async function runTranslate() {
 }
 
 function errorBlock(err) {
-  const needsKey = /GEMINI_API_KEY/i.test(err.message);
+  const needsKey = /GEMINI_API_KEY|MANUS_API_KEY/i.test(err.message);
   return `
     <div class="assist-label" style="color:var(--wrong)">Couldn't complete this</div>
     <p>${escapeHtml(err.message)}</p>
-    ${needsKey ? `<p style="color:var(--ink-soft)">Add your key to <code>.env</code> and restart the server.</p>` : ""}
+    ${needsKey ? `<p style="color:var(--ink-soft)">Add your key to <code>backend/.env</code> (see <code>.env.example</code>) and restart the server.</p>` : ""}
   `;
 }
 

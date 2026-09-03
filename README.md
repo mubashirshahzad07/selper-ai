@@ -131,3 +131,14 @@ calibration, and now the full cross-origin plumbing — has been.
    point is restored, so the document zooms around the content the student was looking at.
 3. **Zoom limits** — Zoom is clamped to 60%–200% so text stays fully readable and no words are
    cut off at extreme scales. The + / − buttons disable at the limits.
+4. **Dark / light mode** — Theme toggle (☾ / ☀) in the top bar. Preference is saved in
+   `localStorage` and falls back to the OS `prefers-color-scheme` on first visit. All CSS
+   tokens are theme-aware via `html[data-theme="dark"]`.
+5. **AI reliability** — Interactive Gemini calls (define / summarize / translate / key terms)
+   now use a single fast retry with short backoff; clearer error messages when the API key is
+   missing, the model blocks content, or the backend is unreachable; markdown-fenced JSON
+   responses are unwrapped automatically.
+6. **Lower latency** — Tighter prompt context windows, lower timeouts for interactive actions,
+   in-memory definition cache (re-looking up the same word is instant), faster Manus task
+   polling (1.5s interval), and clearer network-error messages pointing at the backend URL.
+7. **UI polish** — Theme toggle control, smoother color transitions, theme-aware surfaces.

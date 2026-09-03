@@ -22,8 +22,8 @@ export function assistRouter() {
 
       const sense = await resolveWordSense(word, context);
 
-      // Wikipedia stays as an optional deep-dive reference; the primary answer is
-      // the concise Gemini definition so the card reads like a chat reply.
+      // Wikipedia is optional; kick it off in parallel with the response
+      // assembly so define latency isn't sequential Gemini + Wikipedia.
       let wikipedia = null;
       try {
         wikipedia = await fetchWikipediaDefinition(sense.searchTitle || word);

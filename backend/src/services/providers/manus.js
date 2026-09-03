@@ -118,7 +118,7 @@ async function createTask({ prompt, schema = null, agentProfile = null }) {
   return data.task_id;
 }
 
-async function pollTask(taskId, { timeoutMs = 90000, intervalMs = 2000 } = {}) {
+async function pollTask(taskId, { timeoutMs = 90000, intervalMs = 1500 } = {}) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
