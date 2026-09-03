@@ -13,7 +13,7 @@
     "guest_vdg3GDGpUyvN": {
       "id": "guest_vdg3GDGpUyvN",
       "createdAt": "2026-09-01T09:37:43.402Z",
-      "lastSeenAt": "2026-09-03T18:57:58.959Z"
+      "lastSeenAt": "2026-09-03T19:40:12.586Z"
     },
     "guest__bAIP3BFjbL9": {
       "id": "guest__bAIP3BFjbL9",
@@ -238,6 +238,1310 @@
       "ocrData": null,
       "pageCount": null,
       "ocrApplied": false,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "0kzHGXF7ly": {
+      "id": "0kzHGXF7ly",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "My-Lecture 13- Trees-2.pdf",
+      "storedPath": "/uploads/e7634a061607b8e432df773fe291c65e",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-03T19:17:38.387Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-2\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n2\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n3\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh    \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1 nodes\nh\n4\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n5\n\nIMPLEMENTATION OF BINARY TREES\n6\n\nTREES\nData Type: Any type of objects can be stored in a tree\nAccessor methods\nroot() – return the root of the tree\nparent(p) – return the parent of a node\nchildren(p) – return the children of a node\nQuery methods\nsize() – return the number of nodes in the tree\nisEmpty() – return true if the tree is empty\nelements() – return all elements\nisRoot(p) – return true if node p is the root\nOther methods\nTree traversal, Node addition/deletion, create/destroy etc\n7\n\nBINARY TREE STORAGE\nCONTIGUOUS \nSTORAGE \n(ARRAYS)\nLINKED LIST-\nBASED STORAGE\n8\n\nARRAY STORAGE\nWe can store a binary tree as an array\nTraverse tree in breadth-first order, placing the entries into array\nStorage of elements (i.e., objects/data) starts from root node\nNodes at each level of the tree are stored left to right\n9\n\nARRAY STORAGE EXAMPLE\nA\nB\nC\nG\nE\nI\nD\nH\nF\n1\n2\nA\nB\n3\nC\n4\nD\n5\nE\n6\nF\n7\nG\n8\nH\n9\nI\n10\n\nARRAY STORAGE EXAMPLE\nUnused nodes in tree are\nrepresented by a predefined bit \npattern\nA\nB\nE\nC\nD\n...\n1A\n2B\n[3]-\n[4]C\n[5]-\n[6]-\n[7]-\n[8]D\n[9]-\n...\n[16]E\n11\n\nARRAY STORAGE\nThe children of the node with index k are in 2k and 2k+1\nThe parent of node with index k is in k÷2\n01234567891011121314151617\n12\n\nARRAY STORAGE EXAMPLE\nNode 10 has index 5\nIts children 13 and 23 have indices: (2*5)=10 and  (2*5)+1=11\nIts parent is node 9 with index:  5/2 = 2\n01234567891011121314151617\n13\n\nARRAY STORAGE: DISADVANTAGE\nThere is a significant potential for a lot of wasted memory\nConsider the following tree with 12 nodes (height = 5)\nWhat is the required size of array?\nWhat will be the array size if a child is added to node K?\n14\n32\nDouble\n\nTREES - AS LINKED LIST STRUCTURE\nWe can implement a binary tree by using a class which:\nStores an element\nA left child pointer (pointer to first child)\nA right child pointer (pointer to second child)\nclass  Node {  \n  Type value;\n  Node *LeftChild,\n  Node  *RightChild; \n } root;\nThe root pointer points to the root node\nFollow pointers to find every other element in the tree\nLeaf nodes have L e f t C h i l d and R i g h t C h i l d pointers set to NULL\n15\n\nROOT POINTER\nBC\nD\nE\nGHI\nL\nF\nJK\nA\n16\n\nOPERATIONS ON BINARY TREE\nCreate\nCreate an empty binary tree\nEmpty\nReturn true when binary tree is empty else return false.\nLeftChild\nA pointer is returned to left child of a node. \nWhen a node is without left child, NULL pointer is returned.\nRightChild\nA pointer is returned to right child of a node\nWhen a node is without right child, NULL pointer is returned.\nParent\nA pointer to the parent node is returned.\n17\n\nOPERATIONS ON BINARY TREE\nSibling\nA pointer to sibling of the node is returned or else NULL pointer is returned.\nTree Traversal\nInorder Traversal\nPreorder Traversal\nPostorder Traversal\nInsert\nTo insert a node\nDelete\nTo delete a node\nSearch\nTo search a given node\n18\n\nTREE TRAVERSAL\nTo traverse (or walk) the tree is to visit each node in the tree exactly once\nTraversal must start at the root node\n There is a pointer to the root node of the binary tree\nTwo types of traversals\nBreadth-First Traversal\nDepth-First Traversal\n19\n\n20\n\nBREADTH-FIRST TRAVERSAL\nAll nodes at a given depth d are traversed before nodes at d+1\nCan be implemented using a queue\nOrder:A B H C D G I E F JK\n21\n\nBREADTH-FIRST TRAVERSAL – IMPLEMENTATION\nCreate a queue and push the root node onto the queue\nWhile the queue is not empty:\nEnqueue all children of the front node onto the queue\nDequeue the front node\n22\n\n23\nQueue: [2, 3]\nVisited: [1]\nQueue: [3, 4, 5]\nVisited: [1, 2]\nQueue: [4, 5, 6, 7]\nVisited: [1, 2, 3]\nVisited: [1, 2, 3, 4, 5, 6, 7]\n\nDEPTH-FIRST TRAVERSAL\nTraverse as much as possible along the branch of each child before going to the next \nsibling\nNodes along one branch of the tree are traversed before backtracking\nEach node could be visited multiple times in such a scheme\nThe first time the node is approached (before any children)\nThe last time it is approached (after all children)\n24\n\nDEPTH-FIRST TRAVERSAL (BINARY TREES)\nFor each node in a binary tree, there are three choices\nVisit the node first\nVisit one of the subtrees first\nVisit both the subtrees first\nThese choices lead to three commonly used traversals\nInorder traversal:    (Left subtree) Root   (Right subtree)\nPreorder traversal: Root                     (Left subtree)  (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree)  Root\n25\n\nINORDER TRAVERSAL\nAlgorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\nA, B, C, D, E, F, G, H, I,J\n26\n\nINORDER TRAVERSAL – IMPLEMENTATION\nvoid inorder (Node *p)\n{\n  if (p != NULL)\n  {\n   inorder (p->leftChild); \n   cout << p->info << \" \";  \n   inorder (p->rightChild);\n  }\n}\nvoid main () {\n  inorder (root);\n}\n27\n\nINORDER TRAVERSAL\n▪Algorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\n•Example\n•Left + Right\n•[Left * Right] + [Left +Right]\n•(A * B) + [(Left * Right) +E)\n•(A * B) + [(C * D) +E]\n+\n*+\nAB*E\nCD\n28\n\nPREORDER TRAVERSAL – IMPLEMENTATION\nvoid preorder(Node *p)\n{\n  if (p != NULL)\n  {\n   cout << p->info << \" \"; \n   preorder (p->leftChild);  \n   preorder (p->rightChild);\n  }\n}\nvoid main () {\n  preorder (root);\n}\n29\n\nPREORDER TRAVERSAL\n▪Algorithm\n1.Visit thenode\n2.Traverse the leftsubtree\n3.Traverse the rightsubtree\n•Example\n•+ LeftRight\n•+ [ * Left Right] [+ LeftRight]\n•+ ( * AB) [+ * Left RightE]\n•+*AB + *C DE\n+\n*+\nAB*E\nCD\n30\n\nPOSTORDER TRAVERSAL – IMPLEMENTATION\nvoid postorder (Node *p)\n{\n  if (p != NULL)\n  {\n   postorder(p->leftChild); \n   postorder(p->rightChild);  \n   cout << p->info << \" \";\n  }\n}\nvoid main () {\n  postorder (root);\n}\n31\n\nPOSTORDER TRAVERSAL\n▪Algorithm\n1.Traverse the leftsubtree\n2.Traverse the rightsubtree\n3.Visit thenode\n•Example\n•Left Right+\n•[Left Right *] [Left Right+]+\n•(AB*) [Left Right * E +]+\n•(AB*) [C D * E +]+\n•AB* C D * E ++\n+\n*+\nAB*E\nCD\n32\n\nTRAVERSAL EXERCISE\nTraverse the following tree\nPre-order Traversal \nPost-order Traversal\nIn-order Traversal\n14\n154\n931814\n201697\n175\n45\n14, 4, 3, 9, 7 , 5, 4, 5, 9, 15, 14, 18, 16, 17, 20\n3, 4, 5, 5, 7, 9, 9, 4, 14, 17, 16, 20, 18, 15, 14\n3, 4, 4, 5, 5, 7, 9, 9, 14, 14, 15, 16, 17, 18, 20\n33\n\nEXPRESSION TREES\nExpression tree for (a + b * c) + ((d * e + f) * g)\nLeaves are operands (constants or variables)\nInternal nodes contain operators\nBinary operator has two non-empty subtrees\nUnary operator has one non-empty subtree\n*\nde\n+\nf\n*\nbc\n+\na\n*\ng\n+\n34\n\n35\nCONVERT POSTFIX INTO EXPRESSION TREE – ALGORITHM\nwhile (not the end of the expression) {\nIf (the next symbol in the expression is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nIf (the next symbol in the expression is a binary operator)\n{\ncreate a node for the operator ;\npop from the stack a reference to an operand ;\n make the operand the right subtree of the operator node ;\npop from the stack a reference to an operand ;\n make  the operand the left subtree of the operator node  ;\npush  the  reference  to the  operator  node  onto  the stack ;\n}\n}\n\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\n36\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n37\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n38\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n39\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n40\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n41\n\n42\n\nEVALUATING AN EXPRESSION TREE\nAn operand node evaluates itself by just returning its value\nAn operator node apply:\nthe operator to the results of evaluations from its left subtree and right subtree\n*\n2\n3-\n15\nOrder ofevaluation:\n312\n(2 + ((5 –1) *3))\n+\n43\n\nEVALUATING AN EXPRESSION TREE - IMPLEMENTATION\n44\n\n48\n•Binary trees are ideal when the goal is to parse, transform, or analyze expressions (e.g., in compilers \nor symbolic algebra systems).\n•Stacks are better suited for direct evaluation of postfix or prefix expressions, especially when \nefficiency is critical. \nEXPRESSION EVALUATION - USE OF STACKS AND BINARY TREES\n\nBINARY SEARCH TREE\n49\n\nBINARY SEARCH TREE (BST)\nA Binary Search Tree (BST) is a type of Binary Tree data structure, where the \nfollowing properties must be true for any node \"X\" in the tree:\n➢The X node's left child and all its descendants (children, children's children, and so \non) have lower values than X's value.\n➢The right child, and all its descendants have higher values than X's value.\n➢Left and right subtrees must also be Binary Search Trees.\nThese properties makes it faster to search, add and delete values than a regular \nbinary tree.\n50\n\nEXAMPLES\nA binary search tree\n6\n8\n2\n1\n4\n3\nNot a binary search tree\n6\n8\n2\n1\n4\n3\n7\n51\n\nBINARY SEARCH TREE (BST) – EXAMPLE \n5\n10\n30\n22545\n5\n10\n45\n22530\n5\n10\n30\n2\n25\n45\nNotBST\nBST\nBST\n52\n\nEXAMPLE\nTwo binary search trees representing the same Data set:\n5\n73\n248\n7\n3\n2\n4\n58\n53\n\nEXAMPLE\n14\n415\n791620\n517\n54\n141839\n1415497183516420179145\n54\n\n55\n\n56\n#include <stdio.h>\n#include <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode* root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right ? Root\nvoid postorder(TreeNode* root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d \", root->val);\n}\nint main() {\n    // Create root node\n    TreeNode* root = new TreeNode;\n    root->val = 0;\n    // Create left child\n    root->left = new TreeNode;\n    root->left->val = 1;\n    root->left->left = NULL;\n    root->left->right = NULL;\n    // Create right child\n    root->right = new TreeNode;\n    root->right->val = 2;\n    root->right->left = NULL;\n    root->right->right = NULL;\n    // Traversals\n    printf(\"In-order traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n0\n  /  \\\n 1   2\n\n57\n0\n  /  \\\n 1   2\n\n58\n0\n  /  \\\n 1   2\n#include  <stdio.h>\n#include  <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// Function  to create a new node\nTreeNode* new_node(int val) {\n    TreeNode* n = new TreeNode;\n    n->val = val;\n    n->left = NULL;\n    n->right  = NULL;\n    return n;\n}\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode*  root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d  \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d  \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right  ? Root\nvoid postorder(TreeNode*  root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d  \", root->val);\n}\nint main() {\n    // Build tree\n    TreeNode* root = new_node(0);\n    root->left = new_node(1);\n    root->right  = new_node(2);\n    // Traversals\n    printf(\"In-order  traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order  traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order  traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n\n59\n\n60\nInorder traversal:    (Left subtree) Root (Right subtree)\nPreorder traversal: Root      (Left subtree) (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree) Root\n\n61\n\n62\nVisited Nodes: 0,1,3,4,2,5,6\nFirst insert Right and then Left \nNode on the Stack \nDepth-first search for Binary Trees in C\n\nBINARY SEARCH TREE (BST)\nIn the case of binary search trees (BST), Inorder traversal gives nodes in ascending \norder.\nTo get nodes of BST in descending order, a variation of Inorder traversal is required, \nwhere inorder traversal is reversed.\n63\n\nSEARCHING IN BINARY SEARCH TREE\nThree steps of searching:\n•The item which is to be searched is compared with the root node. \n➢If the item is equal to the root, then we are done.\n➢If its less than the root node then we search in the left sub-tree.\n➢If its more than the root node then we search in the right sub-tree.\nThe above process will continue till the item is found or you reached end \nof the tree.\n64\n\n65\n\n66\n\nINSERTION \nIN BST\nThree steps of insertion\n1.If the root of the tree is NULL, then insert the first \nnode and root points to that node.\n2.If the inserted number is lesser than the root node \nthen insert the node in the left sub-tree.\n3.If the inserted number is greater than the root \nnode then insert the node in the right sub-tree.\n67\n\n68\n\nDELETION IN \nBST\nWhen we delete a node, we need to consider how we \ntake care of the children of the deleted node.\nThis has to be done such that the property of the \nsearch tree is maintained.\n69\n\nDELETION IN BST \n1.The node is a leaf\nDelete it immediately\n2.The node has one child\nAdjust a pointer from the parent to bypass that node\n70\n\nDELETION IN BST\n3.The node has 2 children\nReplace the key of that node with the minimum element at the right sub-tree \nDelete the minimum element \nHas either no child or only right child because if it has a left child, that left child would be smaller and \nwould have been chosen. So, invoke case 1 or 2.\n71\n\n72\n\n73",
+      "ocrData": null,
+      "pageCount": 70,
+      "ocrApplied": false,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "zTHkLIMywm": {
+      "id": "zTHkLIMywm",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "My-Lecture 13- Trees-2.pdf",
+      "storedPath": "/uploads/df180e560d304d56fc7546ec33391ece",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-03T19:18:34.662Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-2\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n2\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n3\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh    \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1 nodes\nh\n4\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n5\n\nIMPLEMENTATION OF BINARY TREES\n6\n\nTREES\nData Type: Any type of objects can be stored in a tree\nAccessor methods\nroot() – return the root of the tree\nparent(p) – return the parent of a node\nchildren(p) – return the children of a node\nQuery methods\nsize() – return the number of nodes in the tree\nisEmpty() – return true if the tree is empty\nelements() – return all elements\nisRoot(p) – return true if node p is the root\nOther methods\nTree traversal, Node addition/deletion, create/destroy etc\n7\n\nBINARY TREE STORAGE\nCONTIGUOUS \nSTORAGE \n(ARRAYS)\nLINKED LIST-\nBASED STORAGE\n8\n\nARRAY STORAGE\nWe can store a binary tree as an array\nTraverse tree in breadth-first order, placing the entries into array\nStorage of elements (i.e., objects/data) starts from root node\nNodes at each level of the tree are stored left to right\n9\n\nARRAY STORAGE EXAMPLE\nA\nB\nC\nG\nE\nI\nD\nH\nF\n1\n2\nA\nB\n3\nC\n4\nD\n5\nE\n6\nF\n7\nG\n8\nH\n9\nI\n10\n\nARRAY STORAGE EXAMPLE\nUnused nodes in tree are\nrepresented by a predefined bit \npattern\nA\nB\nE\nC\nD\n...\n1A\n2B\n[3]-\n[4]C\n[5]-\n[6]-\n[7]-\n[8]D\n[9]-\n...\n[16]E\n11\n\nARRAY STORAGE\nThe children of the node with index k are in 2k and 2k+1\nThe parent of node with index k is in k÷2\n01234567891011121314151617\n12\n\nARRAY STORAGE EXAMPLE\nNode 10 has index 5\nIts children 13 and 23 have indices: (2*5)=10 and  (2*5)+1=11\nIts parent is node 9 with index:  5/2 = 2\n01234567891011121314151617\n13\n\nARRAY STORAGE: DISADVANTAGE\nThere is a significant potential for a lot of wasted memory\nConsider the following tree with 12 nodes (height = 5)\nWhat is the required size of array?\nWhat will be the array size if a child is added to node K?\n14\n32\nDouble\n\nTREES - AS LINKED LIST STRUCTURE\nWe can implement a binary tree by using a class which:\nStores an element\nA left child pointer (pointer to first child)\nA right child pointer (pointer to second child)\nclass  Node {  \n  Type value;\n  Node *LeftChild,\n  Node  *RightChild; \n } root;\nThe root pointer points to the root node\nFollow pointers to find every other element in the tree\nLeaf nodes have L e f t C h i l d and R i g h t C h i l d pointers set to NULL\n15\n\nROOT POINTER\nBC\nD\nE\nGHI\nL\nF\nJK\nA\n16\n\nOPERATIONS ON BINARY TREE\nCreate\nCreate an empty binary tree\nEmpty\nReturn true when binary tree is empty else return false.\nLeftChild\nA pointer is returned to left child of a node. \nWhen a node is without left child, NULL pointer is returned.\nRightChild\nA pointer is returned to right child of a node\nWhen a node is without right child, NULL pointer is returned.\nParent\nA pointer to the parent node is returned.\n17\n\nOPERATIONS ON BINARY TREE\nSibling\nA pointer to sibling of the node is returned or else NULL pointer is returned.\nTree Traversal\nInorder Traversal\nPreorder Traversal\nPostorder Traversal\nInsert\nTo insert a node\nDelete\nTo delete a node\nSearch\nTo search a given node\n18\n\nTREE TRAVERSAL\nTo traverse (or walk) the tree is to visit each node in the tree exactly once\nTraversal must start at the root node\n There is a pointer to the root node of the binary tree\nTwo types of traversals\nBreadth-First Traversal\nDepth-First Traversal\n19\n\n20\n\nBREADTH-FIRST TRAVERSAL\nAll nodes at a given depth d are traversed before nodes at d+1\nCan be implemented using a queue\nOrder:A B H C D G I E F JK\n21\n\nBREADTH-FIRST TRAVERSAL – IMPLEMENTATION\nCreate a queue and push the root node onto the queue\nWhile the queue is not empty:\nEnqueue all children of the front node onto the queue\nDequeue the front node\n22\n\n23\nQueue: [2, 3]\nVisited: [1]\nQueue: [3, 4, 5]\nVisited: [1, 2]\nQueue: [4, 5, 6, 7]\nVisited: [1, 2, 3]\nVisited: [1, 2, 3, 4, 5, 6, 7]\n\nDEPTH-FIRST TRAVERSAL\nTraverse as much as possible along the branch of each child before going to the next \nsibling\nNodes along one branch of the tree are traversed before backtracking\nEach node could be visited multiple times in such a scheme\nThe first time the node is approached (before any children)\nThe last time it is approached (after all children)\n24\n\nDEPTH-FIRST TRAVERSAL (BINARY TREES)\nFor each node in a binary tree, there are three choices\nVisit the node first\nVisit one of the subtrees first\nVisit both the subtrees first\nThese choices lead to three commonly used traversals\nInorder traversal:    (Left subtree) Root   (Right subtree)\nPreorder traversal: Root                     (Left subtree)  (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree)  Root\n25\n\nINORDER TRAVERSAL\nAlgorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\nA, B, C, D, E, F, G, H, I,J\n26\n\nINORDER TRAVERSAL – IMPLEMENTATION\nvoid inorder (Node *p)\n{\n  if (p != NULL)\n  {\n   inorder (p->leftChild); \n   cout << p->info << \" \";  \n   inorder (p->rightChild);\n  }\n}\nvoid main () {\n  inorder (root);\n}\n27\n\nINORDER TRAVERSAL\n▪Algorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\n•Example\n•Left + Right\n•[Left * Right] + [Left +Right]\n•(A * B) + [(Left * Right) +E)\n•(A * B) + [(C * D) +E]\n+\n*+\nAB*E\nCD\n28\n\nPREORDER TRAVERSAL – IMPLEMENTATION\nvoid preorder(Node *p)\n{\n  if (p != NULL)\n  {\n   cout << p->info << \" \"; \n   preorder (p->leftChild);  \n   preorder (p->rightChild);\n  }\n}\nvoid main () {\n  preorder (root);\n}\n29\n\nPREORDER TRAVERSAL\n▪Algorithm\n1.Visit thenode\n2.Traverse the leftsubtree\n3.Traverse the rightsubtree\n•Example\n•+ LeftRight\n•+ [ * Left Right] [+ LeftRight]\n•+ ( * AB) [+ * Left RightE]\n•+*AB + *C DE\n+\n*+\nAB*E\nCD\n30\n\nPOSTORDER TRAVERSAL – IMPLEMENTATION\nvoid postorder (Node *p)\n{\n  if (p != NULL)\n  {\n   postorder(p->leftChild); \n   postorder(p->rightChild);  \n   cout << p->info << \" \";\n  }\n}\nvoid main () {\n  postorder (root);\n}\n31\n\nPOSTORDER TRAVERSAL\n▪Algorithm\n1.Traverse the leftsubtree\n2.Traverse the rightsubtree\n3.Visit thenode\n•Example\n•Left Right+\n•[Left Right *] [Left Right+]+\n•(AB*) [Left Right * E +]+\n•(AB*) [C D * E +]+\n•AB* C D * E ++\n+\n*+\nAB*E\nCD\n32\n\nTRAVERSAL EXERCISE\nTraverse the following tree\nPre-order Traversal \nPost-order Traversal\nIn-order Traversal\n14\n154\n931814\n201697\n175\n45\n14, 4, 3, 9, 7 , 5, 4, 5, 9, 15, 14, 18, 16, 17, 20\n3, 4, 5, 5, 7, 9, 9, 4, 14, 17, 16, 20, 18, 15, 14\n3, 4, 4, 5, 5, 7, 9, 9, 14, 14, 15, 16, 17, 18, 20\n33\n\nEXPRESSION TREES\nExpression tree for (a + b * c) + ((d * e + f) * g)\nLeaves are operands (constants or variables)\nInternal nodes contain operators\nBinary operator has two non-empty subtrees\nUnary operator has one non-empty subtree\n*\nde\n+\nf\n*\nbc\n+\na\n*\ng\n+\n34\n\n35\nCONVERT POSTFIX INTO EXPRESSION TREE – ALGORITHM\nwhile (not the end of the expression) {\nIf (the next symbol in the expression is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nIf (the next symbol in the expression is a binary operator)\n{\ncreate a node for the operator ;\npop from the stack a reference to an operand ;\n make the operand the right subtree of the operator node ;\npop from the stack a reference to an operand ;\n make  the operand the left subtree of the operator node  ;\npush  the  reference  to the  operator  node  onto  the stack ;\n}\n}\n\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\n36\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n37\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n38\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n39\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n40\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n41\n\n42\n\nEVALUATING AN EXPRESSION TREE\nAn operand node evaluates itself by just returning its value\nAn operator node apply:\nthe operator to the results of evaluations from its left subtree and right subtree\n*\n2\n3-\n15\nOrder ofevaluation:\n312\n(2 + ((5 –1) *3))\n+\n43\n\nEVALUATING AN EXPRESSION TREE - IMPLEMENTATION\n44\n\n48\n•Binary trees are ideal when the goal is to parse, transform, or analyze expressions (e.g., in compilers \nor symbolic algebra systems).\n•Stacks are better suited for direct evaluation of postfix or prefix expressions, especially when \nefficiency is critical. \nEXPRESSION EVALUATION - USE OF STACKS AND BINARY TREES\n\nBINARY SEARCH TREE\n49\n\nBINARY SEARCH TREE (BST)\nA Binary Search Tree (BST) is a type of Binary Tree data structure, where the \nfollowing properties must be true for any node \"X\" in the tree:\n➢The X node's left child and all its descendants (children, children's children, and so \non) have lower values than X's value.\n➢The right child, and all its descendants have higher values than X's value.\n➢Left and right subtrees must also be Binary Search Trees.\nThese properties makes it faster to search, add and delete values than a regular \nbinary tree.\n50\n\nEXAMPLES\nA binary search tree\n6\n8\n2\n1\n4\n3\nNot a binary search tree\n6\n8\n2\n1\n4\n3\n7\n51\n\nBINARY SEARCH TREE (BST) – EXAMPLE \n5\n10\n30\n22545\n5\n10\n45\n22530\n5\n10\n30\n2\n25\n45\nNotBST\nBST\nBST\n52\n\nEXAMPLE\nTwo binary search trees representing the same Data set:\n5\n73\n248\n7\n3\n2\n4\n58\n53\n\nEXAMPLE\n14\n415\n791620\n517\n54\n141839\n1415497183516420179145\n54\n\n55\n\n56\n#include <stdio.h>\n#include <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode* root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right ? Root\nvoid postorder(TreeNode* root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d \", root->val);\n}\nint main() {\n    // Create root node\n    TreeNode* root = new TreeNode;\n    root->val = 0;\n    // Create left child\n    root->left = new TreeNode;\n    root->left->val = 1;\n    root->left->left = NULL;\n    root->left->right = NULL;\n    // Create right child\n    root->right = new TreeNode;\n    root->right->val = 2;\n    root->right->left = NULL;\n    root->right->right = NULL;\n    // Traversals\n    printf(\"In-order traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n0\n  /  \\\n 1   2\n\n57\n0\n  /  \\\n 1   2\n\n58\n0\n  /  \\\n 1   2\n#include  <stdio.h>\n#include  <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// Function  to create a new node\nTreeNode* new_node(int val) {\n    TreeNode* n = new TreeNode;\n    n->val = val;\n    n->left = NULL;\n    n->right  = NULL;\n    return n;\n}\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode*  root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d  \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d  \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right  ? Root\nvoid postorder(TreeNode*  root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d  \", root->val);\n}\nint main() {\n    // Build tree\n    TreeNode* root = new_node(0);\n    root->left = new_node(1);\n    root->right  = new_node(2);\n    // Traversals\n    printf(\"In-order  traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order  traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order  traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n\n59\n\n60\nInorder traversal:    (Left subtree) Root (Right subtree)\nPreorder traversal: Root      (Left subtree) (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree) Root\n\n61\n\n62\nVisited Nodes: 0,1,3,4,2,5,6\nFirst insert Right and then Left \nNode on the Stack \nDepth-first search for Binary Trees in C\n\nBINARY SEARCH TREE (BST)\nIn the case of binary search trees (BST), Inorder traversal gives nodes in ascending \norder.\nTo get nodes of BST in descending order, a variation of Inorder traversal is required, \nwhere inorder traversal is reversed.\n63\n\nSEARCHING IN BINARY SEARCH TREE\nThree steps of searching:\n•The item which is to be searched is compared with the root node. \n➢If the item is equal to the root, then we are done.\n➢If its less than the root node then we search in the left sub-tree.\n➢If its more than the root node then we search in the right sub-tree.\nThe above process will continue till the item is found or you reached end \nof the tree.\n64\n\n65\n\n66\n\nINSERTION \nIN BST\nThree steps of insertion\n1.If the root of the tree is NULL, then insert the first \nnode and root points to that node.\n2.If the inserted number is lesser than the root node \nthen insert the node in the left sub-tree.\n3.If the inserted number is greater than the root \nnode then insert the node in the right sub-tree.\n67\n\n68\n\nDELETION IN \nBST\nWhen we delete a node, we need to consider how we \ntake care of the children of the deleted node.\nThis has to be done such that the property of the \nsearch tree is maintained.\n69\n\nDELETION IN BST \n1.The node is a leaf\nDelete it immediately\n2.The node has one child\nAdjust a pointer from the parent to bypass that node\n70\n\nDELETION IN BST\n3.The node has 2 children\nReplace the key of that node with the minimum element at the right sub-tree \nDelete the minimum element \nHas either no child or only right child because if it has a left child, that left child would be smaller and \nwould have been chosen. So, invoke case 1 or 2.\n71\n\n72\n\n73\n\nk",
+      "ocrData": {
+        "2": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.19480208333333332,
+                "y": 0.08358703703703704,
+                "w": 0.6103958333333334,
+                "h": 0.29312962962962963
+              }
+            }
+          ]
+        },
+        "3": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.11754166666666667,
+                "y": 0.13446296296296295,
+                "w": 0.7684791666666667,
+                "h": 0.3
+              }
+            }
+          ]
+        },
+        "4": {
+          "text": "k ",
+          "words": [
+            {
+              "text": "k",
+              "bbox": {
+                "x": 3.6536145833333338,
+                "y": 121.70324259259259,
+                "w": 10.408312500000003,
+                "h": 13.164518518518516
+              }
+            }
+          ],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "k",
+              "words": [
+                {
+                  "text": "k",
+                  "bbox": {
+                    "x": 6,
+                    "y": 425,
+                    "w": 18,
+                    "h": 46
+                  }
+                }
+              ],
+              "rect": {
+                "x": 0.18417708333333332,
+                "y": 0.07453888888888889,
+                "w": 0.5782395833333335,
+                "h": 0.28618518518518515
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 519.3457847131251,
+                "y": 29.614559524602406,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "5": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 26.561517083333335,
+                "y": 4.107318518518518,
+                "w": 1,
+                "h": 0.4663999999999996
+              }
+            }
+          ]
+        },
+        "9": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.4148229166666667,
+                "y": 1.1302777777777778e-7,
+                "w": 0.5375104166666667,
+                "h": 0.4398333333333333
+              }
+            }
+          ]
+        },
+        "10": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.20206249999999998,
+                "y": 0.10773703703703703,
+                "w": 0.3285,
+                "h": 0.5906666666666667
+              }
+            }
+          ]
+        },
+        "11": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.314,
+                "y": 0.06203148148148148,
+                "w": 0.16787500000000002,
+                "h": 0.6255556120703705
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.27449999999999997,
+                "y": 0.0906,
+                "w": 0.4201875,
+                "h": 0.39283333333333326
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.3259270833333333,
+                "y": 0.04912407407407408,
+                "w": 0.4200625,
+                "h": 0.3934259259259259
+              }
+            }
+          ]
+        },
+        "14": {
+          "text": "         ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.40019791666666665,
+                "y": 0.03159259259259259,
+                "w": 0.5399270833333333,
+                "h": 0.3745925925925926
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 8.551979885416666,
+                "y": 0.8514945925925925,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 174.5822905647812,
+                "y": 18.084194828592594,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3553.597674450529,
+                "y": 380.28108838884054,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 72320.00593940938,
+                "y": 7992.935397238132,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1471785.2486125038,
+                "y": 167995.70366063257,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 29952301.98692973,
+                "y": 3530933.8250576938,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 609559298.196059,
+                "y": 74213167.26058112,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 12405141278.014153,
+                "y": 1559812349.6084127,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 252457030149.36005,
+                "y": 32784135964.195137,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 70,
+      "ocrApplied": true,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "_85d2gnIYC": {
+      "id": "_85d2gnIYC",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "My-Lecture 13- Trees-2.pdf",
+      "storedPath": "/uploads/35c8d1849dfcc4d0fcb31b4d99695a7d",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-03T19:26:49.916Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-2\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n2\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n3\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh    \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1 nodes\nh\n4\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n5\n\nIMPLEMENTATION OF BINARY TREES\n6\n\nTREES\nData Type: Any type of objects can be stored in a tree\nAccessor methods\nroot() – return the root of the tree\nparent(p) – return the parent of a node\nchildren(p) – return the children of a node\nQuery methods\nsize() – return the number of nodes in the tree\nisEmpty() – return true if the tree is empty\nelements() – return all elements\nisRoot(p) – return true if node p is the root\nOther methods\nTree traversal, Node addition/deletion, create/destroy etc\n7\n\nBINARY TREE STORAGE\nCONTIGUOUS \nSTORAGE \n(ARRAYS)\nLINKED LIST-\nBASED STORAGE\n8\n\nARRAY STORAGE\nWe can store a binary tree as an array\nTraverse tree in breadth-first order, placing the entries into array\nStorage of elements (i.e., objects/data) starts from root node\nNodes at each level of the tree are stored left to right\n9\n\nARRAY STORAGE EXAMPLE\nA\nB\nC\nG\nE\nI\nD\nH\nF\n1\n2\nA\nB\n3\nC\n4\nD\n5\nE\n6\nF\n7\nG\n8\nH\n9\nI\n10\n\nARRAY STORAGE EXAMPLE\nUnused nodes in tree are\nrepresented by a predefined bit \npattern\nA\nB\nE\nC\nD\n...\n1A\n2B\n[3]-\n[4]C\n[5]-\n[6]-\n[7]-\n[8]D\n[9]-\n...\n[16]E\n11\n\nARRAY STORAGE\nThe children of the node with index k are in 2k and 2k+1\nThe parent of node with index k is in k÷2\n01234567891011121314151617\n12\n\nARRAY STORAGE EXAMPLE\nNode 10 has index 5\nIts children 13 and 23 have indices: (2*5)=10 and  (2*5)+1=11\nIts parent is node 9 with index:  5/2 = 2\n01234567891011121314151617\n13\n\nARRAY STORAGE: DISADVANTAGE\nThere is a significant potential for a lot of wasted memory\nConsider the following tree with 12 nodes (height = 5)\nWhat is the required size of array?\nWhat will be the array size if a child is added to node K?\n14\n32\nDouble\n\nTREES - AS LINKED LIST STRUCTURE\nWe can implement a binary tree by using a class which:\nStores an element\nA left child pointer (pointer to first child)\nA right child pointer (pointer to second child)\nclass  Node {  \n  Type value;\n  Node *LeftChild,\n  Node  *RightChild; \n } root;\nThe root pointer points to the root node\nFollow pointers to find every other element in the tree\nLeaf nodes have L e f t C h i l d and R i g h t C h i l d pointers set to NULL\n15\n\nROOT POINTER\nBC\nD\nE\nGHI\nL\nF\nJK\nA\n16\n\nOPERATIONS ON BINARY TREE\nCreate\nCreate an empty binary tree\nEmpty\nReturn true when binary tree is empty else return false.\nLeftChild\nA pointer is returned to left child of a node. \nWhen a node is without left child, NULL pointer is returned.\nRightChild\nA pointer is returned to right child of a node\nWhen a node is without right child, NULL pointer is returned.\nParent\nA pointer to the parent node is returned.\n17\n\nOPERATIONS ON BINARY TREE\nSibling\nA pointer to sibling of the node is returned or else NULL pointer is returned.\nTree Traversal\nInorder Traversal\nPreorder Traversal\nPostorder Traversal\nInsert\nTo insert a node\nDelete\nTo delete a node\nSearch\nTo search a given node\n18\n\nTREE TRAVERSAL\nTo traverse (or walk) the tree is to visit each node in the tree exactly once\nTraversal must start at the root node\n There is a pointer to the root node of the binary tree\nTwo types of traversals\nBreadth-First Traversal\nDepth-First Traversal\n19\n\n20\n\nBREADTH-FIRST TRAVERSAL\nAll nodes at a given depth d are traversed before nodes at d+1\nCan be implemented using a queue\nOrder:A B H C D G I E F JK\n21\n\nBREADTH-FIRST TRAVERSAL – IMPLEMENTATION\nCreate a queue and push the root node onto the queue\nWhile the queue is not empty:\nEnqueue all children of the front node onto the queue\nDequeue the front node\n22\n\n23\nQueue: [2, 3]\nVisited: [1]\nQueue: [3, 4, 5]\nVisited: [1, 2]\nQueue: [4, 5, 6, 7]\nVisited: [1, 2, 3]\nVisited: [1, 2, 3, 4, 5, 6, 7]\n\nDEPTH-FIRST TRAVERSAL\nTraverse as much as possible along the branch of each child before going to the next \nsibling\nNodes along one branch of the tree are traversed before backtracking\nEach node could be visited multiple times in such a scheme\nThe first time the node is approached (before any children)\nThe last time it is approached (after all children)\n24\n\nDEPTH-FIRST TRAVERSAL (BINARY TREES)\nFor each node in a binary tree, there are three choices\nVisit the node first\nVisit one of the subtrees first\nVisit both the subtrees first\nThese choices lead to three commonly used traversals\nInorder traversal:    (Left subtree) Root   (Right subtree)\nPreorder traversal: Root                     (Left subtree)  (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree)  Root\n25\n\nINORDER TRAVERSAL\nAlgorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\nA, B, C, D, E, F, G, H, I,J\n26\n\nINORDER TRAVERSAL – IMPLEMENTATION\nvoid inorder (Node *p)\n{\n  if (p != NULL)\n  {\n   inorder (p->leftChild); \n   cout << p->info << \" \";  \n   inorder (p->rightChild);\n  }\n}\nvoid main () {\n  inorder (root);\n}\n27\n\nINORDER TRAVERSAL\n▪Algorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\n•Example\n•Left + Right\n•[Left * Right] + [Left +Right]\n•(A * B) + [(Left * Right) +E)\n•(A * B) + [(C * D) +E]\n+\n*+\nAB*E\nCD\n28\n\nPREORDER TRAVERSAL – IMPLEMENTATION\nvoid preorder(Node *p)\n{\n  if (p != NULL)\n  {\n   cout << p->info << \" \"; \n   preorder (p->leftChild);  \n   preorder (p->rightChild);\n  }\n}\nvoid main () {\n  preorder (root);\n}\n29\n\nPREORDER TRAVERSAL\n▪Algorithm\n1.Visit thenode\n2.Traverse the leftsubtree\n3.Traverse the rightsubtree\n•Example\n•+ LeftRight\n•+ [ * Left Right] [+ LeftRight]\n•+ ( * AB) [+ * Left RightE]\n•+*AB + *C DE\n+\n*+\nAB*E\nCD\n30\n\nPOSTORDER TRAVERSAL – IMPLEMENTATION\nvoid postorder (Node *p)\n{\n  if (p != NULL)\n  {\n   postorder(p->leftChild); \n   postorder(p->rightChild);  \n   cout << p->info << \" \";\n  }\n}\nvoid main () {\n  postorder (root);\n}\n31\n\nPOSTORDER TRAVERSAL\n▪Algorithm\n1.Traverse the leftsubtree\n2.Traverse the rightsubtree\n3.Visit thenode\n•Example\n•Left Right+\n•[Left Right *] [Left Right+]+\n•(AB*) [Left Right * E +]+\n•(AB*) [C D * E +]+\n•AB* C D * E ++\n+\n*+\nAB*E\nCD\n32\n\nTRAVERSAL EXERCISE\nTraverse the following tree\nPre-order Traversal \nPost-order Traversal\nIn-order Traversal\n14\n154\n931814\n201697\n175\n45\n14, 4, 3, 9, 7 , 5, 4, 5, 9, 15, 14, 18, 16, 17, 20\n3, 4, 5, 5, 7, 9, 9, 4, 14, 17, 16, 20, 18, 15, 14\n3, 4, 4, 5, 5, 7, 9, 9, 14, 14, 15, 16, 17, 18, 20\n33\n\nEXPRESSION TREES\nExpression tree for (a + b * c) + ((d * e + f) * g)\nLeaves are operands (constants or variables)\nInternal nodes contain operators\nBinary operator has two non-empty subtrees\nUnary operator has one non-empty subtree\n*\nde\n+\nf\n*\nbc\n+\na\n*\ng\n+\n34\n\n35\nCONVERT POSTFIX INTO EXPRESSION TREE – ALGORITHM\nwhile (not the end of the expression) {\nIf (the next symbol in the expression is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nIf (the next symbol in the expression is a binary operator)\n{\ncreate a node for the operator ;\npop from the stack a reference to an operand ;\n make the operand the right subtree of the operator node ;\npop from the stack a reference to an operand ;\n make  the operand the left subtree of the operator node  ;\npush  the  reference  to the  operator  node  onto  the stack ;\n}\n}\n\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\n36\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n37\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n38\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n39\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n40\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n41\n\n42\n\nEVALUATING AN EXPRESSION TREE\nAn operand node evaluates itself by just returning its value\nAn operator node apply:\nthe operator to the results of evaluations from its left subtree and right subtree\n*\n2\n3-\n15\nOrder ofevaluation:\n312\n(2 + ((5 –1) *3))\n+\n43\n\nEVALUATING AN EXPRESSION TREE - IMPLEMENTATION\n44\n\n48\n•Binary trees are ideal when the goal is to parse, transform, or analyze expressions (e.g., in compilers \nor symbolic algebra systems).\n•Stacks are better suited for direct evaluation of postfix or prefix expressions, especially when \nefficiency is critical. \nEXPRESSION EVALUATION - USE OF STACKS AND BINARY TREES\n\nBINARY SEARCH TREE\n49\n\nBINARY SEARCH TREE (BST)\nA Binary Search Tree (BST) is a type of Binary Tree data structure, where the \nfollowing properties must be true for any node \"X\" in the tree:\n➢The X node's left child and all its descendants (children, children's children, and so \non) have lower values than X's value.\n➢The right child, and all its descendants have higher values than X's value.\n➢Left and right subtrees must also be Binary Search Trees.\nThese properties makes it faster to search, add and delete values than a regular \nbinary tree.\n50\n\nEXAMPLES\nA binary search tree\n6\n8\n2\n1\n4\n3\nNot a binary search tree\n6\n8\n2\n1\n4\n3\n7\n51\n\nBINARY SEARCH TREE (BST) – EXAMPLE \n5\n10\n30\n22545\n5\n10\n45\n22530\n5\n10\n30\n2\n25\n45\nNotBST\nBST\nBST\n52\n\nEXAMPLE\nTwo binary search trees representing the same Data set:\n5\n73\n248\n7\n3\n2\n4\n58\n53\n\nEXAMPLE\n14\n415\n791620\n517\n54\n141839\n1415497183516420179145\n54\n\n55\n\n56\n#include <stdio.h>\n#include <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode* root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right ? Root\nvoid postorder(TreeNode* root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d \", root->val);\n}\nint main() {\n    // Create root node\n    TreeNode* root = new TreeNode;\n    root->val = 0;\n    // Create left child\n    root->left = new TreeNode;\n    root->left->val = 1;\n    root->left->left = NULL;\n    root->left->right = NULL;\n    // Create right child\n    root->right = new TreeNode;\n    root->right->val = 2;\n    root->right->left = NULL;\n    root->right->right = NULL;\n    // Traversals\n    printf(\"In-order traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n0\n  /  \\\n 1   2\n\n57\n0\n  /  \\\n 1   2\n\n58\n0\n  /  \\\n 1   2\n#include  <stdio.h>\n#include  <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// Function  to create a new node\nTreeNode* new_node(int val) {\n    TreeNode* n = new TreeNode;\n    n->val = val;\n    n->left = NULL;\n    n->right  = NULL;\n    return n;\n}\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode*  root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d  \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d  \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right  ? Root\nvoid postorder(TreeNode*  root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d  \", root->val);\n}\nint main() {\n    // Build tree\n    TreeNode* root = new_node(0);\n    root->left = new_node(1);\n    root->right  = new_node(2);\n    // Traversals\n    printf(\"In-order  traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order  traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order  traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n\n59\n\n60\nInorder traversal:    (Left subtree) Root (Right subtree)\nPreorder traversal: Root      (Left subtree) (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree) Root\n\n61\n\n62\nVisited Nodes: 0,1,3,4,2,5,6\nFirst insert Right and then Left \nNode on the Stack \nDepth-first search for Binary Trees in C\n\nBINARY SEARCH TREE (BST)\nIn the case of binary search trees (BST), Inorder traversal gives nodes in ascending \norder.\nTo get nodes of BST in descending order, a variation of Inorder traversal is required, \nwhere inorder traversal is reversed.\n63\n\nSEARCHING IN BINARY SEARCH TREE\nThree steps of searching:\n•The item which is to be searched is compared with the root node. \n➢If the item is equal to the root, then we are done.\n➢If its less than the root node then we search in the left sub-tree.\n➢If its more than the root node then we search in the right sub-tree.\nThe above process will continue till the item is found or you reached end \nof the tree.\n64\n\n65\n\n66\n\nINSERTION \nIN BST\nThree steps of insertion\n1.If the root of the tree is NULL, then insert the first \nnode and root points to that node.\n2.If the inserted number is lesser than the root node \nthen insert the node in the left sub-tree.\n3.If the inserted number is greater than the root \nnode then insert the node in the right sub-tree.\n67\n\n68\n\nDELETION IN \nBST\nWhen we delete a node, we need to consider how we \ntake care of the children of the deleted node.\nThis has to be done such that the property of the \nsearch tree is maintained.\n69\n\nDELETION IN BST \n1.The node is a leaf\nDelete it immediately\n2.The node has one child\nAdjust a pointer from the parent to bypass that node\n70\n\nDELETION IN BST\n3.The node has 2 children\nReplace the key of that node with the minimum element at the right sub-tree \nDelete the minimum element \nHas either no child or only right child because if it has a left child, that left child would be smaller and \nwould have been chosen. So, invoke case 1 or 2.\n71\n\n72\n\n73\n\nk",
+      "ocrData": {
+        "2": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.19480208333333332,
+                "y": 0.08358703703703704,
+                "w": 0.6103958333333334,
+                "h": 0.29312962962962963
+              }
+            }
+          ]
+        },
+        "3": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.11754166666666667,
+                "y": 0.13446296296296295,
+                "w": 0.7684791666666667,
+                "h": 0.3
+              }
+            }
+          ]
+        },
+        "4": {
+          "text": "k ",
+          "words": [
+            {
+              "text": "k",
+              "bbox": {
+                "x": 3.6536145833333338,
+                "y": 122.27561296296295,
+                "w": 10.408312500000003,
+                "h": 14.309259259259258
+              }
+            }
+          ],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "k",
+              "words": [
+                {
+                  "text": "k",
+                  "bbox": {
+                    "x": 6,
+                    "y": 427,
+                    "w": 18,
+                    "h": 50
+                  }
+                }
+              ],
+              "rect": {
+                "x": 0.18417708333333332,
+                "y": 0.07453888888888889,
+                "w": 0.5782395833333335,
+                "h": 0.28618518518518515
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 519.3457847131251,
+                "y": 29.614559524602406,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "5": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 26.561517083333335,
+                "y": 4.107318518518518,
+                "w": 1,
+                "h": 0.4663999999999996
+              }
+            }
+          ]
+        },
+        "9": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.4148229166666667,
+                "y": 1.1302777777777778e-7,
+                "w": 0.5375104166666667,
+                "h": 0.4398333333333333
+              }
+            }
+          ]
+        },
+        "10": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.20206249999999998,
+                "y": 0.10773703703703703,
+                "w": 0.3285,
+                "h": 0.5906666666666667
+              }
+            }
+          ]
+        },
+        "11": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.314,
+                "y": 0.06203148148148148,
+                "w": 0.16787500000000002,
+                "h": 0.6255556120703705
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.27449999999999997,
+                "y": 0.0906,
+                "w": 0.4201875,
+                "h": 0.39283333333333326
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.3259270833333333,
+                "y": 0.04912407407407408,
+                "w": 0.4200625,
+                "h": 0.3934259259259259
+              }
+            }
+          ]
+        },
+        "14": {
+          "text": "         ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.40019791666666665,
+                "y": 0.03159259259259259,
+                "w": 0.5399270833333333,
+                "h": 0.3745925925925926
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 8.551979885416666,
+                "y": 0.8514945925925925,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 174.5822905647812,
+                "y": 18.084194828592594,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3553.597674450529,
+                "y": 380.28108838884054,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 72320.00593940938,
+                "y": 7992.935397238132,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1471785.2486125038,
+                "y": 167995.70366063257,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 29952301.98692973,
+                "y": 3530933.8250576938,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 609559298.196059,
+                "y": 74213167.26058112,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 12405141278.014153,
+                "y": 1559812349.6084127,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 252457030149.36005,
+                "y": 32784135964.195137,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 70,
+      "ocrApplied": true,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "aseSLiPdKH": {
+      "id": "aseSLiPdKH",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "My-Lecture 13- Trees-2.pdf",
+      "storedPath": "/uploads/d7f5943ee8506e69d6bec176ec45204c",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-03T19:37:35.184Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-2\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n2\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n3\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh    \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1 nodes\nh\n4\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n5\n\nIMPLEMENTATION OF BINARY TREES\n6\n\nTREES\nData Type: Any type of objects can be stored in a tree\nAccessor methods\nroot() – return the root of the tree\nparent(p) – return the parent of a node\nchildren(p) – return the children of a node\nQuery methods\nsize() – return the number of nodes in the tree\nisEmpty() – return true if the tree is empty\nelements() – return all elements\nisRoot(p) – return true if node p is the root\nOther methods\nTree traversal, Node addition/deletion, create/destroy etc\n7\n\nBINARY TREE STORAGE\nCONTIGUOUS \nSTORAGE \n(ARRAYS)\nLINKED LIST-\nBASED STORAGE\n8\n\nARRAY STORAGE\nWe can store a binary tree as an array\nTraverse tree in breadth-first order, placing the entries into array\nStorage of elements (i.e., objects/data) starts from root node\nNodes at each level of the tree are stored left to right\n9\n\nARRAY STORAGE EXAMPLE\nA\nB\nC\nG\nE\nI\nD\nH\nF\n1\n2\nA\nB\n3\nC\n4\nD\n5\nE\n6\nF\n7\nG\n8\nH\n9\nI\n10\n\nARRAY STORAGE EXAMPLE\nUnused nodes in tree are\nrepresented by a predefined bit \npattern\nA\nB\nE\nC\nD\n...\n1A\n2B\n[3]-\n[4]C\n[5]-\n[6]-\n[7]-\n[8]D\n[9]-\n...\n[16]E\n11\n\nARRAY STORAGE\nThe children of the node with index k are in 2k and 2k+1\nThe parent of node with index k is in k÷2\n01234567891011121314151617\n12\n\nARRAY STORAGE EXAMPLE\nNode 10 has index 5\nIts children 13 and 23 have indices: (2*5)=10 and  (2*5)+1=11\nIts parent is node 9 with index:  5/2 = 2\n01234567891011121314151617\n13\n\nARRAY STORAGE: DISADVANTAGE\nThere is a significant potential for a lot of wasted memory\nConsider the following tree with 12 nodes (height = 5)\nWhat is the required size of array?\nWhat will be the array size if a child is added to node K?\n14\n32\nDouble\n\nTREES - AS LINKED LIST STRUCTURE\nWe can implement a binary tree by using a class which:\nStores an element\nA left child pointer (pointer to first child)\nA right child pointer (pointer to second child)\nclass  Node {  \n  Type value;\n  Node *LeftChild,\n  Node  *RightChild; \n } root;\nThe root pointer points to the root node\nFollow pointers to find every other element in the tree\nLeaf nodes have L e f t C h i l d and R i g h t C h i l d pointers set to NULL\n15\n\nROOT POINTER\nBC\nD\nE\nGHI\nL\nF\nJK\nA\n16\n\nOPERATIONS ON BINARY TREE\nCreate\nCreate an empty binary tree\nEmpty\nReturn true when binary tree is empty else return false.\nLeftChild\nA pointer is returned to left child of a node. \nWhen a node is without left child, NULL pointer is returned.\nRightChild\nA pointer is returned to right child of a node\nWhen a node is without right child, NULL pointer is returned.\nParent\nA pointer to the parent node is returned.\n17\n\nOPERATIONS ON BINARY TREE\nSibling\nA pointer to sibling of the node is returned or else NULL pointer is returned.\nTree Traversal\nInorder Traversal\nPreorder Traversal\nPostorder Traversal\nInsert\nTo insert a node\nDelete\nTo delete a node\nSearch\nTo search a given node\n18\n\nTREE TRAVERSAL\nTo traverse (or walk) the tree is to visit each node in the tree exactly once\nTraversal must start at the root node\n There is a pointer to the root node of the binary tree\nTwo types of traversals\nBreadth-First Traversal\nDepth-First Traversal\n19\n\n20\n\nBREADTH-FIRST TRAVERSAL\nAll nodes at a given depth d are traversed before nodes at d+1\nCan be implemented using a queue\nOrder:A B H C D G I E F JK\n21\n\nBREADTH-FIRST TRAVERSAL – IMPLEMENTATION\nCreate a queue and push the root node onto the queue\nWhile the queue is not empty:\nEnqueue all children of the front node onto the queue\nDequeue the front node\n22\n\n23\nQueue: [2, 3]\nVisited: [1]\nQueue: [3, 4, 5]\nVisited: [1, 2]\nQueue: [4, 5, 6, 7]\nVisited: [1, 2, 3]\nVisited: [1, 2, 3, 4, 5, 6, 7]\n\nDEPTH-FIRST TRAVERSAL\nTraverse as much as possible along the branch of each child before going to the next \nsibling\nNodes along one branch of the tree are traversed before backtracking\nEach node could be visited multiple times in such a scheme\nThe first time the node is approached (before any children)\nThe last time it is approached (after all children)\n24\n\nDEPTH-FIRST TRAVERSAL (BINARY TREES)\nFor each node in a binary tree, there are three choices\nVisit the node first\nVisit one of the subtrees first\nVisit both the subtrees first\nThese choices lead to three commonly used traversals\nInorder traversal:    (Left subtree) Root   (Right subtree)\nPreorder traversal: Root                     (Left subtree)  (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree)  Root\n25\n\nINORDER TRAVERSAL\nAlgorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\nA, B, C, D, E, F, G, H, I,J\n26\n\nINORDER TRAVERSAL – IMPLEMENTATION\nvoid inorder (Node *p)\n{\n  if (p != NULL)\n  {\n   inorder (p->leftChild); \n   cout << p->info << \" \";  \n   inorder (p->rightChild);\n  }\n}\nvoid main () {\n  inorder (root);\n}\n27\n\nINORDER TRAVERSAL\n▪Algorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\n•Example\n•Left + Right\n•[Left * Right] + [Left +Right]\n•(A * B) + [(Left * Right) +E)\n•(A * B) + [(C * D) +E]\n+\n*+\nAB*E\nCD\n28\n\nPREORDER TRAVERSAL – IMPLEMENTATION\nvoid preorder(Node *p)\n{\n  if (p != NULL)\n  {\n   cout << p->info << \" \"; \n   preorder (p->leftChild);  \n   preorder (p->rightChild);\n  }\n}\nvoid main () {\n  preorder (root);\n}\n29\n\nPREORDER TRAVERSAL\n▪Algorithm\n1.Visit thenode\n2.Traverse the leftsubtree\n3.Traverse the rightsubtree\n•Example\n•+ LeftRight\n•+ [ * Left Right] [+ LeftRight]\n•+ ( * AB) [+ * Left RightE]\n•+*AB + *C DE\n+\n*+\nAB*E\nCD\n30\n\nPOSTORDER TRAVERSAL – IMPLEMENTATION\nvoid postorder (Node *p)\n{\n  if (p != NULL)\n  {\n   postorder(p->leftChild); \n   postorder(p->rightChild);  \n   cout << p->info << \" \";\n  }\n}\nvoid main () {\n  postorder (root);\n}\n31\n\nPOSTORDER TRAVERSAL\n▪Algorithm\n1.Traverse the leftsubtree\n2.Traverse the rightsubtree\n3.Visit thenode\n•Example\n•Left Right+\n•[Left Right *] [Left Right+]+\n•(AB*) [Left Right * E +]+\n•(AB*) [C D * E +]+\n•AB* C D * E ++\n+\n*+\nAB*E\nCD\n32\n\nTRAVERSAL EXERCISE\nTraverse the following tree\nPre-order Traversal \nPost-order Traversal\nIn-order Traversal\n14\n154\n931814\n201697\n175\n45\n14, 4, 3, 9, 7 , 5, 4, 5, 9, 15, 14, 18, 16, 17, 20\n3, 4, 5, 5, 7, 9, 9, 4, 14, 17, 16, 20, 18, 15, 14\n3, 4, 4, 5, 5, 7, 9, 9, 14, 14, 15, 16, 17, 18, 20\n33\n\nEXPRESSION TREES\nExpression tree for (a + b * c) + ((d * e + f) * g)\nLeaves are operands (constants or variables)\nInternal nodes contain operators\nBinary operator has two non-empty subtrees\nUnary operator has one non-empty subtree\n*\nde\n+\nf\n*\nbc\n+\na\n*\ng\n+\n34\n\n35\nCONVERT POSTFIX INTO EXPRESSION TREE – ALGORITHM\nwhile (not the end of the expression) {\nIf (the next symbol in the expression is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nIf (the next symbol in the expression is a binary operator)\n{\ncreate a node for the operator ;\npop from the stack a reference to an operand ;\n make the operand the right subtree of the operator node ;\npop from the stack a reference to an operand ;\n make  the operand the left subtree of the operator node  ;\npush  the  reference  to the  operator  node  onto  the stack ;\n}\n}\n\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\n36\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n37\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n38\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n39\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n40\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n41\n\n42\n\nEVALUATING AN EXPRESSION TREE\nAn operand node evaluates itself by just returning its value\nAn operator node apply:\nthe operator to the results of evaluations from its left subtree and right subtree\n*\n2\n3-\n15\nOrder ofevaluation:\n312\n(2 + ((5 –1) *3))\n+\n43\n\nEVALUATING AN EXPRESSION TREE - IMPLEMENTATION\n44\n\n48\n•Binary trees are ideal when the goal is to parse, transform, or analyze expressions (e.g., in compilers \nor symbolic algebra systems).\n•Stacks are better suited for direct evaluation of postfix or prefix expressions, especially when \nefficiency is critical. \nEXPRESSION EVALUATION - USE OF STACKS AND BINARY TREES\n\nBINARY SEARCH TREE\n49\n\nBINARY SEARCH TREE (BST)\nA Binary Search Tree (BST) is a type of Binary Tree data structure, where the \nfollowing properties must be true for any node \"X\" in the tree:\n➢The X node's left child and all its descendants (children, children's children, and so \non) have lower values than X's value.\n➢The right child, and all its descendants have higher values than X's value.\n➢Left and right subtrees must also be Binary Search Trees.\nThese properties makes it faster to search, add and delete values than a regular \nbinary tree.\n50\n\nEXAMPLES\nA binary search tree\n6\n8\n2\n1\n4\n3\nNot a binary search tree\n6\n8\n2\n1\n4\n3\n7\n51\n\nBINARY SEARCH TREE (BST) – EXAMPLE \n5\n10\n30\n22545\n5\n10\n45\n22530\n5\n10\n30\n2\n25\n45\nNotBST\nBST\nBST\n52\n\nEXAMPLE\nTwo binary search trees representing the same Data set:\n5\n73\n248\n7\n3\n2\n4\n58\n53\n\nEXAMPLE\n14\n415\n791620\n517\n54\n141839\n1415497183516420179145\n54\n\n55\n\n56\n#include <stdio.h>\n#include <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode* root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right ? Root\nvoid postorder(TreeNode* root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d \", root->val);\n}\nint main() {\n    // Create root node\n    TreeNode* root = new TreeNode;\n    root->val = 0;\n    // Create left child\n    root->left = new TreeNode;\n    root->left->val = 1;\n    root->left->left = NULL;\n    root->left->right = NULL;\n    // Create right child\n    root->right = new TreeNode;\n    root->right->val = 2;\n    root->right->left = NULL;\n    root->right->right = NULL;\n    // Traversals\n    printf(\"In-order traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n0\n  /  \\\n 1   2\n\n57\n0\n  /  \\\n 1   2\n\n58\n0\n  /  \\\n 1   2\n#include  <stdio.h>\n#include  <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// Function  to create a new node\nTreeNode* new_node(int val) {\n    TreeNode* n = new TreeNode;\n    n->val = val;\n    n->left = NULL;\n    n->right  = NULL;\n    return n;\n}\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode*  root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d  \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d  \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right  ? Root\nvoid postorder(TreeNode*  root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d  \", root->val);\n}\nint main() {\n    // Build tree\n    TreeNode* root = new_node(0);\n    root->left = new_node(1);\n    root->right  = new_node(2);\n    // Traversals\n    printf(\"In-order  traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order  traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order  traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n\n59\n\n60\nInorder traversal:    (Left subtree) Root (Right subtree)\nPreorder traversal: Root      (Left subtree) (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree) Root\n\n61\n\n62\nVisited Nodes: 0,1,3,4,2,5,6\nFirst insert Right and then Left \nNode on the Stack \nDepth-first search for Binary Trees in C\n\nBINARY SEARCH TREE (BST)\nIn the case of binary search trees (BST), Inorder traversal gives nodes in ascending \norder.\nTo get nodes of BST in descending order, a variation of Inorder traversal is required, \nwhere inorder traversal is reversed.\n63\n\nSEARCHING IN BINARY SEARCH TREE\nThree steps of searching:\n•The item which is to be searched is compared with the root node. \n➢If the item is equal to the root, then we are done.\n➢If its less than the root node then we search in the left sub-tree.\n➢If its more than the root node then we search in the right sub-tree.\nThe above process will continue till the item is found or you reached end \nof the tree.\n64\n\n65\n\n66\n\nINSERTION \nIN BST\nThree steps of insertion\n1.If the root of the tree is NULL, then insert the first \nnode and root points to that node.\n2.If the inserted number is lesser than the root node \nthen insert the node in the left sub-tree.\n3.If the inserted number is greater than the root \nnode then insert the node in the right sub-tree.\n67\n\n68\n\nDELETION IN \nBST\nWhen we delete a node, we need to consider how we \ntake care of the children of the deleted node.\nThis has to be done such that the property of the \nsearch tree is maintained.\n69\n\nDELETION IN BST \n1.The node is a leaf\nDelete it immediately\n2.The node has one child\nAdjust a pointer from the parent to bypass that node\n70\n\nDELETION IN BST\n3.The node has 2 children\nReplace the key of that node with the minimum element at the right sub-tree \nDelete the minimum element \nHas either no child or only right child because if it has a left child, that left child would be smaller and \nwould have been chosen. So, invoke case 1 or 2.\n71\n\n72\n\n73\n\nk",
+      "ocrData": {
+        "2": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.19480208333333332,
+                "y": 0.08358703703703704,
+                "w": 0.6103958333333334,
+                "h": 0.29312962962962963
+              }
+            }
+          ]
+        },
+        "3": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.11754166666666667,
+                "y": 0.13446296296296295,
+                "w": 0.7684791666666667,
+                "h": 0.3
+              }
+            }
+          ]
+        },
+        "4": {
+          "text": "k ",
+          "words": [
+            {
+              "text": "k",
+              "bbox": {
+                "x": 3.6536145833333338,
+                "y": 121.13087222222221,
+                "w": 10.408312500000003,
+                "h": 14.309259259259258
+              }
+            }
+          ],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "k",
+              "words": [
+                {
+                  "text": "k",
+                  "bbox": {
+                    "x": 6,
+                    "y": 423,
+                    "w": 18,
+                    "h": 50
+                  }
+                }
+              ],
+              "rect": {
+                "x": 0.18417708333333332,
+                "y": 0.07453888888888889,
+                "w": 0.5782395833333335,
+                "h": 0.28618518518518515
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 519.3457847131251,
+                "y": 29.614559524602406,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "5": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 26.561517083333335,
+                "y": 4.107318518518518,
+                "w": 1,
+                "h": 0.4663999999999996
+              }
+            }
+          ]
+        },
+        "9": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.4148229166666667,
+                "y": 1.1302777777777778e-7,
+                "w": 0.5375104166666667,
+                "h": 0.4398333333333333
+              }
+            }
+          ]
+        },
+        "10": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.20206249999999998,
+                "y": 0.10773703703703703,
+                "w": 0.3285,
+                "h": 0.5906666666666667
+              }
+            }
+          ]
+        },
+        "11": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.314,
+                "y": 0.06203148148148148,
+                "w": 0.16787500000000002,
+                "h": 0.6255556120703705
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.27449999999999997,
+                "y": 0.0906,
+                "w": 0.4201875,
+                "h": 0.39283333333333326
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.3259270833333333,
+                "y": 0.04912407407407408,
+                "w": 0.4200625,
+                "h": 0.3934259259259259
+              }
+            }
+          ]
+        },
+        "14": {
+          "text": "         ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.40019791666666665,
+                "y": 0.03159259259259259,
+                "w": 0.5399270833333333,
+                "h": 0.3745925925925926
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 8.551979885416666,
+                "y": 0.8514945925925925,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 174.5822905647812,
+                "y": 18.084194828592594,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3553.597674450529,
+                "y": 380.28108838884054,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 72320.00593940938,
+                "y": 7992.935397238132,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1471785.2486125038,
+                "y": 167995.70366063257,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 29952301.98692973,
+                "y": 3530933.8250576938,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 609559298.196059,
+                "y": 74213167.26058112,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 12405141278.014153,
+                "y": 1559812349.6084127,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 252457030149.36005,
+                "y": 32784135964.195137,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 70,
+      "ocrApplied": true,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "K_LVRjFOwN": {
+      "id": "K_LVRjFOwN",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "My-Lecture 13- Trees-2.pdf",
+      "storedPath": "/uploads/6f806c12708512088e8c6365def48606",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-03T19:40:02.320Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-2\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n2\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n3\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh    \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1 nodes\nh\n4\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n5\n\nIMPLEMENTATION OF BINARY TREES\n6\n\nTREES\nData Type: Any type of objects can be stored in a tree\nAccessor methods\nroot() – return the root of the tree\nparent(p) – return the parent of a node\nchildren(p) – return the children of a node\nQuery methods\nsize() – return the number of nodes in the tree\nisEmpty() – return true if the tree is empty\nelements() – return all elements\nisRoot(p) – return true if node p is the root\nOther methods\nTree traversal, Node addition/deletion, create/destroy etc\n7\n\nBINARY TREE STORAGE\nCONTIGUOUS \nSTORAGE \n(ARRAYS)\nLINKED LIST-\nBASED STORAGE\n8\n\nARRAY STORAGE\nWe can store a binary tree as an array\nTraverse tree in breadth-first order, placing the entries into array\nStorage of elements (i.e., objects/data) starts from root node\nNodes at each level of the tree are stored left to right\n9\n\nARRAY STORAGE EXAMPLE\nA\nB\nC\nG\nE\nI\nD\nH\nF\n1\n2\nA\nB\n3\nC\n4\nD\n5\nE\n6\nF\n7\nG\n8\nH\n9\nI\n10\n\nARRAY STORAGE EXAMPLE\nUnused nodes in tree are\nrepresented by a predefined bit \npattern\nA\nB\nE\nC\nD\n...\n1A\n2B\n[3]-\n[4]C\n[5]-\n[6]-\n[7]-\n[8]D\n[9]-\n...\n[16]E\n11\n\nARRAY STORAGE\nThe children of the node with index k are in 2k and 2k+1\nThe parent of node with index k is in k÷2\n01234567891011121314151617\n12\n\nARRAY STORAGE EXAMPLE\nNode 10 has index 5\nIts children 13 and 23 have indices: (2*5)=10 and  (2*5)+1=11\nIts parent is node 9 with index:  5/2 = 2\n01234567891011121314151617\n13\n\nARRAY STORAGE: DISADVANTAGE\nThere is a significant potential for a lot of wasted memory\nConsider the following tree with 12 nodes (height = 5)\nWhat is the required size of array?\nWhat will be the array size if a child is added to node K?\n14\n32\nDouble\n\nTREES - AS LINKED LIST STRUCTURE\nWe can implement a binary tree by using a class which:\nStores an element\nA left child pointer (pointer to first child)\nA right child pointer (pointer to second child)\nclass  Node {  \n  Type value;\n  Node *LeftChild,\n  Node  *RightChild; \n } root;\nThe root pointer points to the root node\nFollow pointers to find every other element in the tree\nLeaf nodes have L e f t C h i l d and R i g h t C h i l d pointers set to NULL\n15\n\nROOT POINTER\nBC\nD\nE\nGHI\nL\nF\nJK\nA\n16\n\nOPERATIONS ON BINARY TREE\nCreate\nCreate an empty binary tree\nEmpty\nReturn true when binary tree is empty else return false.\nLeftChild\nA pointer is returned to left child of a node. \nWhen a node is without left child, NULL pointer is returned.\nRightChild\nA pointer is returned to right child of a node\nWhen a node is without right child, NULL pointer is returned.\nParent\nA pointer to the parent node is returned.\n17\n\nOPERATIONS ON BINARY TREE\nSibling\nA pointer to sibling of the node is returned or else NULL pointer is returned.\nTree Traversal\nInorder Traversal\nPreorder Traversal\nPostorder Traversal\nInsert\nTo insert a node\nDelete\nTo delete a node\nSearch\nTo search a given node\n18\n\nTREE TRAVERSAL\nTo traverse (or walk) the tree is to visit each node in the tree exactly once\nTraversal must start at the root node\n There is a pointer to the root node of the binary tree\nTwo types of traversals\nBreadth-First Traversal\nDepth-First Traversal\n19\n\n20\n\nBREADTH-FIRST TRAVERSAL\nAll nodes at a given depth d are traversed before nodes at d+1\nCan be implemented using a queue\nOrder:A B H C D G I E F JK\n21\n\nBREADTH-FIRST TRAVERSAL – IMPLEMENTATION\nCreate a queue and push the root node onto the queue\nWhile the queue is not empty:\nEnqueue all children of the front node onto the queue\nDequeue the front node\n22\n\n23\nQueue: [2, 3]\nVisited: [1]\nQueue: [3, 4, 5]\nVisited: [1, 2]\nQueue: [4, 5, 6, 7]\nVisited: [1, 2, 3]\nVisited: [1, 2, 3, 4, 5, 6, 7]\n\nDEPTH-FIRST TRAVERSAL\nTraverse as much as possible along the branch of each child before going to the next \nsibling\nNodes along one branch of the tree are traversed before backtracking\nEach node could be visited multiple times in such a scheme\nThe first time the node is approached (before any children)\nThe last time it is approached (after all children)\n24\n\nDEPTH-FIRST TRAVERSAL (BINARY TREES)\nFor each node in a binary tree, there are three choices\nVisit the node first\nVisit one of the subtrees first\nVisit both the subtrees first\nThese choices lead to three commonly used traversals\nInorder traversal:    (Left subtree) Root   (Right subtree)\nPreorder traversal: Root                     (Left subtree)  (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree)  Root\n25\n\nINORDER TRAVERSAL\nAlgorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\nA, B, C, D, E, F, G, H, I,J\n26\n\nINORDER TRAVERSAL – IMPLEMENTATION\nvoid inorder (Node *p)\n{\n  if (p != NULL)\n  {\n   inorder (p->leftChild); \n   cout << p->info << \" \";  \n   inorder (p->rightChild);\n  }\n}\nvoid main () {\n  inorder (root);\n}\n27\n\nINORDER TRAVERSAL\n▪Algorithm\n1.Traverse the left subtree in inorder\n2.Visit the root\n3.Traverse the right subtree in inorder\n•Example\n•Left + Right\n•[Left * Right] + [Left +Right]\n•(A * B) + [(Left * Right) +E)\n•(A * B) + [(C * D) +E]\n+\n*+\nAB*E\nCD\n28\n\nPREORDER TRAVERSAL – IMPLEMENTATION\nvoid preorder(Node *p)\n{\n  if (p != NULL)\n  {\n   cout << p->info << \" \"; \n   preorder (p->leftChild);  \n   preorder (p->rightChild);\n  }\n}\nvoid main () {\n  preorder (root);\n}\n29\n\nPREORDER TRAVERSAL\n▪Algorithm\n1.Visit thenode\n2.Traverse the leftsubtree\n3.Traverse the rightsubtree\n•Example\n•+ LeftRight\n•+ [ * Left Right] [+ LeftRight]\n•+ ( * AB) [+ * Left RightE]\n•+*AB + *C DE\n+\n*+\nAB*E\nCD\n30\n\nPOSTORDER TRAVERSAL – IMPLEMENTATION\nvoid postorder (Node *p)\n{\n  if (p != NULL)\n  {\n   postorder(p->leftChild); \n   postorder(p->rightChild);  \n   cout << p->info << \" \";\n  }\n}\nvoid main () {\n  postorder (root);\n}\n31\n\nPOSTORDER TRAVERSAL\n▪Algorithm\n1.Traverse the leftsubtree\n2.Traverse the rightsubtree\n3.Visit thenode\n•Example\n•Left Right+\n•[Left Right *] [Left Right+]+\n•(AB*) [Left Right * E +]+\n•(AB*) [C D * E +]+\n•AB* C D * E ++\n+\n*+\nAB*E\nCD\n32\n\nTRAVERSAL EXERCISE\nTraverse the following tree\nPre-order Traversal \nPost-order Traversal\nIn-order Traversal\n14\n154\n931814\n201697\n175\n45\n14, 4, 3, 9, 7 , 5, 4, 5, 9, 15, 14, 18, 16, 17, 20\n3, 4, 5, 5, 7, 9, 9, 4, 14, 17, 16, 20, 18, 15, 14\n3, 4, 4, 5, 5, 7, 9, 9, 14, 14, 15, 16, 17, 18, 20\n33\n\nEXPRESSION TREES\nExpression tree for (a + b * c) + ((d * e + f) * g)\nLeaves are operands (constants or variables)\nInternal nodes contain operators\nBinary operator has two non-empty subtrees\nUnary operator has one non-empty subtree\n*\nde\n+\nf\n*\nbc\n+\na\n*\ng\n+\n34\n\n35\nCONVERT POSTFIX INTO EXPRESSION TREE – ALGORITHM\nwhile (not the end of the expression) {\nIf (the next symbol in the expression is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nIf (the next symbol in the expression is a binary operator)\n{\ncreate a node for the operator ;\npop from the stack a reference to an operand ;\n make the operand the right subtree of the operator node ;\npop from the stack a reference to an operand ;\n make  the operand the left subtree of the operator node  ;\npush  the  reference  to the  operator  node  onto  the stack ;\n}\n}\n\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\n36\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n37\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n38\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n39\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n40\n\nwhile(not  the  end  of the expression)\n{\nif(the next  symbol  is an operand)\n{\ncreate a node for the operand ;\npush the reference to the created node onto the stack ;\n}\nif(the next symbol is a binary operator)\n{\ncreate an operator node;\npop operandfrom the stack;\n make the operand the rightsubtree ;\npop operand from the stack;\n make the operand the leftsubtree ;\npush the operator node onto the stack;\n}\n}\nExample:\na b + c d e + **\nCONVERT POSTFIX INTO EXPRESSION TREE – EXAMPLE\n41\n\n42\n\nEVALUATING AN EXPRESSION TREE\nAn operand node evaluates itself by just returning its value\nAn operator node apply:\nthe operator to the results of evaluations from its left subtree and right subtree\n*\n2\n3-\n15\nOrder ofevaluation:\n312\n(2 + ((5 –1) *3))\n+\n43\n\nEVALUATING AN EXPRESSION TREE - IMPLEMENTATION\n44\n\n48\n•Binary trees are ideal when the goal is to parse, transform, or analyze expressions (e.g., in compilers \nor symbolic algebra systems).\n•Stacks are better suited for direct evaluation of postfix or prefix expressions, especially when \nefficiency is critical. \nEXPRESSION EVALUATION - USE OF STACKS AND BINARY TREES\n\nBINARY SEARCH TREE\n49\n\nBINARY SEARCH TREE (BST)\nA Binary Search Tree (BST) is a type of Binary Tree data structure, where the \nfollowing properties must be true for any node \"X\" in the tree:\n➢The X node's left child and all its descendants (children, children's children, and so \non) have lower values than X's value.\n➢The right child, and all its descendants have higher values than X's value.\n➢Left and right subtrees must also be Binary Search Trees.\nThese properties makes it faster to search, add and delete values than a regular \nbinary tree.\n50\n\nEXAMPLES\nA binary search tree\n6\n8\n2\n1\n4\n3\nNot a binary search tree\n6\n8\n2\n1\n4\n3\n7\n51\n\nBINARY SEARCH TREE (BST) – EXAMPLE \n5\n10\n30\n22545\n5\n10\n45\n22530\n5\n10\n30\n2\n25\n45\nNotBST\nBST\nBST\n52\n\nEXAMPLE\nTwo binary search trees representing the same Data set:\n5\n73\n248\n7\n3\n2\n4\n58\n53\n\nEXAMPLE\n14\n415\n791620\n517\n54\n141839\n1415497183516420179145\n54\n\n55\n\n56\n#include <stdio.h>\n#include <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode* root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right ? Root\nvoid postorder(TreeNode* root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d \", root->val);\n}\nint main() {\n    // Create root node\n    TreeNode* root = new TreeNode;\n    root->val = 0;\n    // Create left child\n    root->left = new TreeNode;\n    root->left->val = 1;\n    root->left->left = NULL;\n    root->left->right = NULL;\n    // Create right child\n    root->right = new TreeNode;\n    root->right->val = 2;\n    root->right->left = NULL;\n    root->right->right = NULL;\n    // Traversals\n    printf(\"In-order traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n0\n  /  \\\n 1   2\n\n57\n0\n  /  \\\n 1   2\n\n58\n0\n  /  \\\n 1   2\n#include  <stdio.h>\n#include  <stdlib.h>\ntypedef struct TreeNode {\n    int val;\n    struct TreeNode* left;\n    struct TreeNode* right;\n} TreeNode;\n// Function  to create a new node\nTreeNode* new_node(int val) {\n    TreeNode* n = new TreeNode;\n    n->val = val;\n    n->left = NULL;\n    n->right  = NULL;\n    return n;\n}\n// In-order: Left ? Root ? Right\nvoid inorder(TreeNode*  root) {\n    if (root == NULL) return;\n    inorder(root->left);\n    printf(\"%d  \", root->val);\n    inorder(root->right);\n}\n// Pre-order: Root ? Left ? Right\nvoid preorder(TreeNode* root) {\n    if (root == NULL) return;\n    printf(\"%d  \", root->val);\n    preorder(root->left);\n    preorder(root->right);\n}\n// Post-order: Left ? Right  ? Root\nvoid postorder(TreeNode*  root) {\n    if (root == NULL) return;\n    postorder(root->left);\n    postorder(root->right);\n    printf(\"%d  \", root->val);\n}\nint main() {\n    // Build tree\n    TreeNode* root = new_node(0);\n    root->left = new_node(1);\n    root->right  = new_node(2);\n    // Traversals\n    printf(\"In-order  traversal: \");\n    inorder(root);\n    printf(\"\\n\");\n    printf(\"Pre-order  traversal: \");\n    preorder(root);\n    printf(\"\\n\");\n    printf(\"Post-order  traversal: \");\n    postorder(root);\n    printf(\"\\n\");\n    // Free memory\n    free(root->left);\n    free(root->right);\n    free(root);\n    return 0;\n}\n\n59\n\n60\nInorder traversal:    (Left subtree) Root (Right subtree)\nPreorder traversal: Root      (Left subtree) (Right subtree)\nPostorder traversal: (Left subtree)     (Right subtree) Root\n\n61\n\n62\nVisited Nodes: 0,1,3,4,2,5,6\nFirst insert Right and then Left \nNode on the Stack \nDepth-first search for Binary Trees in C\n\nBINARY SEARCH TREE (BST)\nIn the case of binary search trees (BST), Inorder traversal gives nodes in ascending \norder.\nTo get nodes of BST in descending order, a variation of Inorder traversal is required, \nwhere inorder traversal is reversed.\n63\n\nSEARCHING IN BINARY SEARCH TREE\nThree steps of searching:\n•The item which is to be searched is compared with the root node. \n➢If the item is equal to the root, then we are done.\n➢If its less than the root node then we search in the left sub-tree.\n➢If its more than the root node then we search in the right sub-tree.\nThe above process will continue till the item is found or you reached end \nof the tree.\n64\n\n65\n\n66\n\nINSERTION \nIN BST\nThree steps of insertion\n1.If the root of the tree is NULL, then insert the first \nnode and root points to that node.\n2.If the inserted number is lesser than the root node \nthen insert the node in the left sub-tree.\n3.If the inserted number is greater than the root \nnode then insert the node in the right sub-tree.\n67\n\n68\n\nDELETION IN \nBST\nWhen we delete a node, we need to consider how we \ntake care of the children of the deleted node.\nThis has to be done such that the property of the \nsearch tree is maintained.\n69\n\nDELETION IN BST \n1.The node is a leaf\nDelete it immediately\n2.The node has one child\nAdjust a pointer from the parent to bypass that node\n70\n\nDELETION IN BST\n3.The node has 2 children\nReplace the key of that node with the minimum element at the right sub-tree \nDelete the minimum element \nHas either no child or only right child because if it has a left child, that left child would be smaller and \nwould have been chosen. So, invoke case 1 or 2.\n71\n\n72\n\n73",
+      "ocrData": {
+        "2": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.19480208333333332,
+                "y": 0.08358703703703704,
+                "w": 0.6103958333333334,
+                "h": 0.29312962962962963
+              }
+            }
+          ]
+        },
+        "3": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.11754166666666667,
+                "y": 0.13446296296296295,
+                "w": 0.7684791666666667,
+                "h": 0.3
+              }
+            }
+          ]
+        },
+        "4": {
+          "text": " ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.18417708333333332,
+                "y": 0.07453888888888889,
+                "w": 0.5782395833333335,
+                "h": 0.28618518518518515
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 519.3457847131251,
+                "y": 29.614559524602406,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "5": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 26.561517083333335,
+                "y": 4.107318518518518,
+                "w": 1,
+                "h": 0.4663999999999996
+              }
+            }
+          ]
+        },
+        "9": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.4148229166666667,
+                "y": 1.1302777777777778e-7,
+                "w": 0.5375104166666667,
+                "h": 0.4398333333333333
+              }
+            }
+          ]
+        },
+        "10": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.20206249999999998,
+                "y": 0.10773703703703703,
+                "w": 0.3285,
+                "h": 0.5906666666666667
+              }
+            }
+          ]
+        },
+        "11": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.314,
+                "y": 0.06203148148148148,
+                "w": 0.16787500000000002,
+                "h": 0.6255556120703705
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.27449999999999997,
+                "y": 0.0906,
+                "w": 0.4201875,
+                "h": 0.39283333333333326
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.3259270833333333,
+                "y": 0.04912407407407408,
+                "w": 0.4200625,
+                "h": 0.3934259259259259
+              }
+            }
+          ]
+        },
+        "14": {
+          "text": "         ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.40019791666666665,
+                "y": 0.03159259259259259,
+                "w": 0.5399270833333333,
+                "h": 0.3745925925925926
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 8.551979885416666,
+                "y": 0.8514945925925925,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 174.5822905647812,
+                "y": 18.084194828592594,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3553.597674450529,
+                "y": 380.28108838884054,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 72320.00593940938,
+                "y": 7992.935397238132,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1471785.2486125038,
+                "y": 167995.70366063257,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 29952301.98692973,
+                "y": 3530933.8250576938,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 609559298.196059,
+                "y": 74213167.26058112,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 12405141278.014153,
+                "y": 1559812349.6084127,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 252457030149.36005,
+                "y": 32784135964.195137,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 70,
+      "ocrApplied": true,
       "ocrError": null,
       "keyTerms": null
     }

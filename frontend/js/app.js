@@ -649,6 +649,7 @@ updateZoomButtons();
 
 // Build one absolutely-positioned span PER WORD, so right-click always
 // targets a single word (PRD 5.2 / "Low interaction cost").
+// Also adds click-drag multi-word selection with amber highlight boxes (same as image OCR).
 function buildWordLayer(layerEl, textContent, viewport) {
   for (const item of textContent.items) {
     const str = item.str;
@@ -684,131 +685,125 @@ function buildWordLayer(layerEl, textContent, viewport) {
       layerEl.appendChild(span);
     }
   }
+
+  // Click-drag selection support — matches image OCR appendOcrSpans pattern.
+  let isDragging = false;
+  let dragStartSpan = null;
+  const selectedSpans = new Set();
+
+  function clearSelection() {
+    selectedSpans.forEach((s) => s.classList.remove("pdf-selected"));
+    selectedSpans.clear();
+  }
+
+  layerEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    const span = e.target.closest("span");
+    if (!span) return;
+    isDragging = true;
+    dragStartSpan = span;
+    clearSelection();
+    span.classList.add("pdf-selected");
+    selectedSpans.add(span);
+  });
+
+  layerEl.addEventListener("mousemove", (e) => {
+    if (!isDragging || !dragStartSpan) return;
+    const span = e.target.closest("span");
+    if (!span) return;
+    clearSelection();
+
+    const allSpans = Array.from(layerEl.querySelectorAll("span"));
+    const startIdx = allSpans.indexOf(dragStartSpan);
+    const endIdx = allSpans.indexOf(span);
+    if (startIdx === -1 || endIdx === -1) return;
+
+    const min = Math.min(startIdx, endIdx);
+    const max = Math.max(startIdx, endIdx);
+    for (let i = min; i <= max; i++) {
+      allSpans[i].classList.add("pdf-selected");
+      selectedSpans.add(allSpans[i]);
+    }
+  });
+
+  function finishDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (selectedSpans.size > 0 && dragStartSpan) {
+      const allSpans = Array.from(layerEl.querySelectorAll("span"));
+      const startIdx = allSpans.indexOf(dragStartSpan);
+      const endIdx = allSpans.indexOf(e?.target?.closest?.("span") || dragStartSpan);
+      const min = Math.min(startIdx, endIdx >= 0 ? endIdx : startIdx);
+      const max = Math.max(startIdx, endIdx >= 0 ? endIdx : startIdx);
+
+      const selectedWords = [];
+      for (let i = min; i <= max; i++) {
+        selectedWords.push(allSpans[i].textContent);
+      }
+      const selectedText = selectedWords.join(" ");
+
+      const contextStart = Math.max(0, min - 30);
+      const contextEnd = Math.min(allSpans.length - 1, max + 30);
+      const contextWords = [];
+      for (let i = contextStart; i <= contextEnd; i++) {
+        contextWords.push(allSpans[i].textContent);
+      }
+      const context = contextWords.join(" ");
+
+      savedPdfSelection = { text: selectedText, context };
+    }
+
+    dragStartSpan = null;
+  }
+
+  layerEl.addEventListener("mouseup", finishDrag);
+  layerEl.addEventListener("mouseleave", () => {
+    if (isDragging) finishDrag(null);
+  });
 }
 
 // ---------------------------------------------------------------------------
-// Global PDF custom selection highlight — drawn as a blue overlay div since
-// ::selection doesn't render over opacity:0.001 text layers. Uses event
-// delegation so it works across all pages and survives re-renders (zoom, etc.).
-// ---------------------------------------------------------------------------
-let pdfSelRect = null;
 // Persisted PDF selection — captured on mouseup so it survives the contextmenu
 // event clearing window.getSelection(). Used by onWordContextMenu to send the
 // full passage text to the AI instead of just the right-clicked word.
-let savedPdfSelection = null; // { text, context, range }
+// ---------------------------------------------------------------------------
+let savedPdfSelection = null; // { text, context }
 
-function updatePdfSelectionHighlight() {
-  if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) return;
-
-  // Find which PDF text layer contains the selection anchor.
-  const anchorNode = sel.anchorNode;
-  const textLayer = anchorNode?.closest?.(".pdf-text-layer");
-  if (!textLayer) return;
-
-  const range = sel.getRangeAt(0);
-  const rects = range.getClientRects();
-  if (!rects.length) return;
-
-  // Save the selection text + context so onWordContextMenu can use it later.
-  const selectedText = sel.toString().trim();
-  if (selectedText) {
-    const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
-    savedPdfSelection = { text: selectedText, context, range: range.cloneRange() };
-  }
-
-  pdfSelRect = document.createElement("div");
-  pdfSelRect.className = "pdf-custom-selection";
-  pdfSelRect.style.position = "absolute";
-  pdfSelRect.style.zIndex = "2";
-  pdfSelRect.style.pointerEvents = "none";
-
-  const wrapRect = textLayer.parentElement.getBoundingClientRect();
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (let i = 0; i < rects.length; i++) {
-    const r = rects[i];
-    if (r.width < 1 || r.height < 1) continue;
-    minX = Math.min(minX, r.left - wrapRect.left);
-    minY = Math.min(minY, r.top - wrapRect.top);
-    maxX = Math.max(maxX, r.right - wrapRect.left);
-    maxY = Math.max(maxY, r.bottom - wrapRect.top);
-  }
-  if (minX === Infinity) { pdfSelRect.remove(); pdfSelRect = null; return; }
-
-  pdfSelRect.style.left = `${minX}px`;
-  pdfSelRect.style.top = `${minY}px`;
-  pdfSelRect.style.width = `${maxX - minX}px`;
-  pdfSelRect.style.height = `${maxY - minY}px`;
-  textLayer.appendChild(pdfSelRect);
-}
-
-// Single global listener — no per-page binding needed.
-document.addEventListener("mouseup", () => {
-  const sel = window.getSelection();
-  if (sel && !sel.isCollapsed) {
-    // Capture selection for both PDF and image layers.
-    const textLayer = sel.anchorNode?.closest?.(".pdf-text-layer");
-    const imageLayer = sel.anchorNode?.closest?.(".image-text-layer");
-    if (textLayer) {
-      updatePdfSelectionHighlight();
-      // Also save for contextmenu use.
-      const selectedText = sel.toString().trim();
-      if (selectedText) {
-        const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
-        savedPdfSelection = { text: selectedText, context, range: sel.getRangeAt(0).cloneRange() };
-      }
-    } else if (imageLayer) {
-      // Image OCR selection is handled by appendOcrSpans drag logic.
-    }
-  } else {
-    savedPdfSelection = null; // clear when clicking outside a selection
-  }
-});
-document.addEventListener("selectionchange", () => {
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) {
-    // Don't clear savedPdfSelection here — the contextmenu event may fire after
-    // selectionchange clears the browser selection. Only clear on mousedown.
-    if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
-  } else if (sel.anchorNode?.closest?.(".pdf-text-layer")) {
-    updatePdfSelectionHighlight();
-  }
-});
-// Clear saved selection on new mousedown (fresh interaction).
+// Single global listener — clears savedPdfSelection on new left-clicks outside menus.
 document.addEventListener("mousedown", (e) => {
   if (e.button === 0 && !e.target.closest(".context-menu") && !e.target.closest(".assist-card")) {
     savedPdfSelection = null;
   }
 });
 
-// Right-click context menu for PDF pages — uses savedPdfSelection (captured on mouseup)
-// since window.getSelection() may be cleared by the time contextmenu fires.
+// Right-click context menu for PDF pages — uses savedPdfSelection (captured by
+// click-drag in buildWordLayer) since native selection is disabled.
 document.addEventListener("contextmenu", (e) => {
   const pageWrap = e.target.closest?.(".pdf-page-wrap");
   if (!pageWrap) return;
 
-  // Try live selection first, fall back to savedPdfSelection from mouseup.
-  const sel = window.getSelection();
-  let selectedText = sel?.toString()?.trim();
-  let range = sel?.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+  // Use savedPdfSelection from drag-selection, or fall back to live browser selection.
+  let selectedText = savedPdfSelection?.text || null;
+  let context = savedPdfSelection?.context || null;
 
-  if (!selectedText && savedPdfSelection?.text) {
-    selectedText = savedPdfSelection.text;
-    range = savedPdfSelection.range;
+  if (!selectedText) {
+    const sel = window.getSelection();
+    selectedText = sel?.toString()?.trim() || null;
+    if (selectedText) {
+      const textLayer = pageWrap.querySelector(".pdf-text-layer");
+      context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
+    }
   }
   if (!selectedText) return; // no selection — let browser show its default menu
 
   e.preventDefault();
 
-  const textLayer = pageWrap.querySelector(".pdf-text-layer");
-  const context = savedPdfSelection?.context || surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
-
   state.pendingSelection = {
     type: "passage",
     text: selectedText,
     context,
-    anchorEl: range,
+    anchorEl: null,
   };
   openContextMenu(e.clientX, e.clientY, { showSummarize: true });
 });

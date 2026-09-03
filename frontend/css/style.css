@@ -239,13 +239,24 @@ button { font-family: inherit; cursor: pointer; }
   line-height: 1;
 }
 .pdf-text-layer span {
-  position: absolute; white-space: pre; cursor: text; user-select: text;
-  color: rgba(28, 27, 34, 0.05);
-}
-/* Hide ghost text inside the browser's native selection — only show the blue box. */
-.pdf-text-layer span::selection {
+  position: absolute; white-space: pre; cursor: text;
+  user-select: none; /* disable native selection — we use custom amber boxes like image OCR */
   color: transparent;
-  background: rgba(59, 63, 224, 0.30);
+  display: flex;
+  align-items: center;
+}
+/* Hover hint — matches image OCR span:hover for discoverability. */
+.pdf-text-layer span:hover {
+  color: transparent; /* keep text invisible — only the amber tint is visible */
+  background: rgba(217, 166, 46, 0.12);
+  border-radius: 3px;
+}
+/* Amber selection box for PDF words — matches image OCR .ocr-selected style. */
+.pdf-text-layer span.pdf-selected {
+  color: transparent; /* keep text invisible inside amber box — only the box is visible */
+  background: rgba(217, 166, 46, 0.30);
+  border-radius: 3px;
+  outline: 1px solid rgba(217, 166, 46, 0.50);
 }
 /* Debug: toggle ghost text to visible via topbar 👁 Ghost button. */
 html.ghost-text-visible .pdf-text-layer span {
