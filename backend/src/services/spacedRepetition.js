@@ -7,9 +7,9 @@
 export const INTERVAL_DAYS = [1, 3, 7, 14, 30];
 
 function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
 }
 
 /**
@@ -19,15 +19,15 @@ function addDays(date, days) {
  * @param {Date} now
  */
 export function scheduleAfterOutcome(prevIntervalDays, remembered, now = new Date()) {
-  if (!remembered) {
-    const intervalDays = INTERVAL_DAYS[0];
-    return { intervalDays, nextReviewAt: addDays(now, intervalDays).toISOString() };
-  }
+    if (!remembered) {
+        const intervalDays = INTERVAL_DAYS[0];
+        return { intervalDays, nextReviewAt: addDays(now, intervalDays).toISOString() };
+    }
 
-  const currentIndex = INTERVAL_DAYS.indexOf(prevIntervalDays);
-  const nextIndex = currentIndex === -1 ? 0 : Math.min(currentIndex + 1, INTERVAL_DAYS.length - 1);
-  const intervalDays = INTERVAL_DAYS[nextIndex];
-  return { intervalDays, nextReviewAt: addDays(now, intervalDays).toISOString() };
+    const currentIndex = INTERVAL_DAYS.indexOf(prevIntervalDays);
+    const nextIndex = currentIndex === -1 ? 0 : Math.min(currentIndex + 1, INTERVAL_DAYS.length - 1);
+    const intervalDays = INTERVAL_DAYS[nextIndex];
+    return { intervalDays, nextReviewAt: addDays(now, intervalDays).toISOString() };
 }
 
 /**
@@ -35,19 +35,19 @@ export function scheduleAfterOutcome(prevIntervalDays, remembered, now = new Dat
  * @param {{ nextReviewAt: string } | null | undefined} schedule
  */
 export function isDue(schedule, now = new Date()) {
-  if (!schedule) return true; // never scheduled = due immediately
-  return new Date(schedule.nextReviewAt) <= now;
+    if (!schedule) return true; // never scheduled = due immediately
+    return new Date(schedule.nextReviewAt) <= now;
 }
 
 /** Whole days between now and the schedule's next review date, floor 0. */
 export function daysUntilDue(schedule, now = new Date()) {
-  if (!schedule) return 0;
-  const diffMs = new Date(schedule.nextReviewAt) - now;
-  return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    if (!schedule) return 0;
+    const diffMs = new Date(schedule.nextReviewAt) - now;
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 /** Stable key so a review-queue item can be matched back to its schedule. */
 export function keyForReviewItem(item) {
-  if (item.type === "doubt") return `doubt:${item.data.id}`;
-  return `attempt:${item.data.attemptId}:${item.data.questionIndex}`;
+    if (item.type === "doubt") return `doubt:${item.data.id}`;
+    return `attempt:${item.data.attemptId}:${item.data.questionIndex}`;
 }

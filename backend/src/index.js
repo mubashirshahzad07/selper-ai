@@ -28,11 +28,11 @@ const PORT = process.env.PORT || 3000;
 // deployment (e.g. FRONTEND_ORIGIN=https://your-frontend.example.com).
 const allowedOrigin = process.env.FRONTEND_ORIGIN || "*";
 app.use(
-  cors({
-    origin: allowedOrigin,
-    exposedHeaders: ["x-study-session"],
-    allowedHeaders: ["Content-Type", "x-study-session"],
-  })
+    cors({
+        origin: allowedOrigin,
+        exposedHeaders: ["x-study-session"],
+        allowedHeaders: ["Content-Type", "x-study-session"],
+    })
 );
 
 app.use(express.json({ limit: "5mb" }));
@@ -52,8 +52,8 @@ app.use("/uploads", express.static(UPLOAD_DIR));
 app.use(sessionMiddleware);
 
 const upload = multer({
-  dest: UPLOAD_DIR,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+    dest: UPLOAD_DIR,
+    limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
 });
 
 app.use("/api/documents", documentsRouter(upload));
@@ -68,12 +68,12 @@ app.use("/api/dashboard", dashboardRouter());
 app.use("/api/settings", settingsRouter());
 
 app.listen(PORT, () => {
-  console.log(`Study Helper backend running at http://localhost:${PORT}`);
-  console.log(`CORS allowed origin: ${allowedOrigin}`);
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn("⚠️  GEMINI_API_KEY is not set — OCR/definitions/summaries/translate/key-terms/grading will fail until you add it to .env");
-  }
-  if (!process.env.MANUS_API_KEY) {
-    console.warn("⚠️  MANUS_API_KEY is not set — quiz generation will fail until you add it to .env");
-  }
+    console.log(`Study Helper backend running at http://localhost:${PORT}`);
+    console.log(`CORS allowed origin: ${allowedOrigin}`);
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn("⚠️  GEMINI_API_KEY is not set — OCR/definitions/summaries/translate/key-terms/grading will fail until you add it to .env");
+    }
+    if (!process.env.MANUS_API_KEY) {
+        console.warn("⚠️  MANUS_API_KEY is not set — quiz generation will fail until you add it to .env");
+    }
 });

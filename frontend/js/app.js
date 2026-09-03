@@ -171,7 +171,7 @@ async function handleUpload(file) {
         // asynchronously by client-side Tesseract below.
         renderImageWithOcr(imageUrl, full.ocrData);
         setStatus(`${doc.filename} · original layout`);
-        
+
         // Set page progress to 1/1 for images
         setPageProgressForImage();
 
@@ -923,81 +923,81 @@ function buildWordLayer(layerEl, textContent, viewport) {
         }
     }
 
-  // Click-drag selection support — matches image OCR appendOcrSpans pattern.
-  let isDragging = false;
-  let dragStartSpan = null;
-  const selectedSpans = new Set();
+    // Click-drag selection support — matches image OCR appendOcrSpans pattern.
+    let isDragging = false;
+    let dragStartSpan = null;
+    const selectedSpans = new Set();
 
-  function clearSelection() {
-    selectedSpans.forEach((s) => s.classList.remove("pdf-selected"));
-    selectedSpans.clear();
-  }
-
-  layerEl.addEventListener("mousedown", (e) => {
-    if (e.button !== 0) return;
-    const span = e.target.closest("span");
-    if (!span) return;
-    isDragging = true;
-    dragStartSpan = span;
-    clearSelection();
-    span.classList.add("pdf-selected");
-    selectedSpans.add(span);
-  });
-
-  layerEl.addEventListener("mousemove", (e) => {
-    if (!isDragging || !dragStartSpan) return;
-    const span = e.target.closest("span");
-    if (!span) return;
-    clearSelection();
-
-    const allSpans = Array.from(layerEl.querySelectorAll("span"));
-    const startIdx = allSpans.indexOf(dragStartSpan);
-    const endIdx = allSpans.indexOf(span);
-    if (startIdx === -1 || endIdx === -1) return;
-
-    const min = Math.min(startIdx, endIdx);
-    const max = Math.max(startIdx, endIdx);
-    for (let i = min; i <= max; i++) {
-      allSpans[i].classList.add("pdf-selected");
-      selectedSpans.add(allSpans[i]);
-    }
-  });
-
-  function finishDrag(e) {
-    if (!isDragging) return;
-    isDragging = false;
-
-    if (selectedSpans.size > 0 && dragStartSpan) {
-      const allSpans = Array.from(layerEl.querySelectorAll("span"));
-      const startIdx = allSpans.indexOf(dragStartSpan);
-      const endIdx = allSpans.indexOf(e?.target?.closest?.("span") || dragStartSpan);
-      const min = Math.min(startIdx, endIdx >= 0 ? endIdx : startIdx);
-      const max = Math.max(startIdx, endIdx >= 0 ? endIdx : startIdx);
-
-      const selectedWords = [];
-      for (let i = min; i <= max; i++) {
-        selectedWords.push(allSpans[i].textContent);
-      }
-      const selectedText = selectedWords.join(" ");
-
-      const contextStart = Math.max(0, min - 30);
-      const contextEnd = Math.min(allSpans.length - 1, max + 30);
-      const contextWords = [];
-      for (let i = contextStart; i <= contextEnd; i++) {
-        contextWords.push(allSpans[i].textContent);
-      }
-      const context = contextWords.join(" ");
-
-      savedPdfSelection = { text: selectedText, context };
+    function clearSelection() {
+        selectedSpans.forEach((s) => s.classList.remove("pdf-selected"));
+        selectedSpans.clear();
     }
 
-    dragStartSpan = null;
-  }
+    layerEl.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        const span = e.target.closest("span");
+        if (!span) return;
+        isDragging = true;
+        dragStartSpan = span;
+        clearSelection();
+        span.classList.add("pdf-selected");
+        selectedSpans.add(span);
+    });
 
-  layerEl.addEventListener("mouseup", finishDrag);
-  layerEl.addEventListener("mouseleave", () => {
-    if (isDragging) finishDrag(null);
-  });
+    layerEl.addEventListener("mousemove", (e) => {
+        if (!isDragging || !dragStartSpan) return;
+        const span = e.target.closest("span");
+        if (!span) return;
+        clearSelection();
+
+        const allSpans = Array.from(layerEl.querySelectorAll("span"));
+        const startIdx = allSpans.indexOf(dragStartSpan);
+        const endIdx = allSpans.indexOf(span);
+        if (startIdx === -1 || endIdx === -1) return;
+
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+        for (let i = min; i <= max; i++) {
+            allSpans[i].classList.add("pdf-selected");
+            selectedSpans.add(allSpans[i]);
+        }
+    });
+
+    function finishDrag(e) {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (selectedSpans.size > 0 && dragStartSpan) {
+            const allSpans = Array.from(layerEl.querySelectorAll("span"));
+            const startIdx = allSpans.indexOf(dragStartSpan);
+            const endIdx = allSpans.indexOf(e?.target?.closest?.("span") || dragStartSpan);
+            const min = Math.min(startIdx, endIdx >= 0 ? endIdx : startIdx);
+            const max = Math.max(startIdx, endIdx >= 0 ? endIdx : startIdx);
+
+            const selectedWords = [];
+            for (let i = min; i <= max; i++) {
+                selectedWords.push(allSpans[i].textContent);
+            }
+            const selectedText = selectedWords.join(" ");
+
+            const contextStart = Math.max(0, min - 30);
+            const contextEnd = Math.min(allSpans.length - 1, max + 30);
+            const contextWords = [];
+            for (let i = contextStart; i <= contextEnd; i++) {
+                contextWords.push(allSpans[i].textContent);
+            }
+            const context = contextWords.join(" ");
+
+            savedPdfSelection = { text: selectedText, context };
+        }
+
+        dragStartSpan = null;
+    }
+
+    layerEl.addEventListener("mouseup", finishDrag);
+    layerEl.addEventListener("mouseleave", () => {
+        if (isDragging) finishDrag(null);
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -1181,22 +1181,22 @@ function trackAnchorOnScroll() {
 function updatePageProgress() {
     const scrollContainer = $("#pdfScroll");
     if (!scrollContainer || !pdfDoc) return;
-    
+
     const pages = scrollContainer.querySelectorAll(".pdf-page-wrap");
     if (pages.length === 0) return;
-    
+
     const scrollTop = scrollContainer.scrollTop;
     const containerHeight = scrollContainer.clientHeight;
     const midpoint = scrollTop + (containerHeight / 2);
-    
+
     let currentPageNum = 1;
-    
+
     // Find which page is currently in view (at the midpoint of viewport)
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         const pageTop = page.offsetTop;
         const pageBottom = pageTop + page.offsetHeight;
-        
+
         if (midpoint >= pageTop && midpoint <= pageBottom) {
             currentPageNum = parseInt(page.dataset.page);
             break;
@@ -1204,15 +1204,15 @@ function updatePageProgress() {
             currentPageNum = parseInt(page.dataset.page);
         }
     }
-    
+
     const totalPages = pdfDoc.numPages;
     const percent = Math.round((currentPageNum / totalPages) * 100);
-    
+
     // Update the display
     const pageCurrentEl = $("#pageCurrent");
     const pageTotalEl = $("#pageTotal");
     const pagePercentEl = $("#pagePercent");
-    
+
     if (pageCurrentEl) pageCurrentEl.textContent = currentPageNum;
     if (pageTotalEl) pageTotalEl.textContent = totalPages;
     if (pagePercentEl) pagePercentEl.textContent = `${percent}%`;
@@ -1223,7 +1223,7 @@ function setPageProgressForImage() {
     const pageCurrentEl = $("#pageCurrent");
     const pageTotalEl = $("#pageTotal");
     const pagePercentEl = $("#pagePercent");
-    
+
     if (pageCurrentEl) pageCurrentEl.textContent = "1";
     if (pageTotalEl) pageTotalEl.textContent = "1";
     if (pagePercentEl) pagePercentEl.textContent = "100%";
@@ -1234,7 +1234,7 @@ function resetPageProgress() {
     const pageCurrentEl = $("#pageCurrent");
     const pageTotalEl = $("#pageTotal");
     const pagePercentEl = $("#pagePercent");
-    
+
     if (pageCurrentEl) pageCurrentEl.textContent = "0";
     if (pageTotalEl) pageTotalEl.textContent = "0";
     if (pagePercentEl) pagePercentEl.textContent = "0%";
@@ -1284,13 +1284,13 @@ async function runSummarize() {
     const { text, context } = state.pendingSelection;
     positionAssistCard();
     assistBody.innerHTML = `
-        <div class="loader-container" style="padding: 16px 0;">
-            <div class="loader-bounce">
-                <span></span><span></span><span></span>
-            </div>
-            <span>Summarizing from source context…</span>
-        </div>
-    `;
+<div class="loader-container" style="padding: 16px 0;">
+    <div class="loader-bounce">
+        <span></span><span></span><span></span>
+    </div>
+    <span>Summarizing from source context…</span>
+</div>
+`;
     assistCard.classList.remove("hidden");
 
     try {
@@ -1315,13 +1315,13 @@ async function runTranslate() {
     const { text } = state.pendingSelection;
     positionAssistCard();
     assistBody.innerHTML = `
-        <div class="loader-container" style="padding: 16px 0;">
-            <div class="loader-bounce">
-                <span></span><span></span><span></span>
-            </div>
-            <span>Translating to Urdu…</span>
-        </div>
-    `;
+<div class="loader-container" style="padding: 16px 0;">
+    <div class="loader-bounce">
+        <span></span><span></span><span></span>
+    </div>
+    <span>Translating to Urdu…</span>
+</div>
+`;
     assistCard.classList.remove("hidden");
 
     try {
@@ -1414,14 +1414,14 @@ $("#btnReview").addEventListener("click", async () => {
 async function loadAndRenderReviewQueue() {
     const container = $("#reviewList");
     container.innerHTML = `
-        <div class="loader-container" style="padding: 32px 0;">
-            <div class="loader-dots">
-                <span></span><span></span><span></span>
-            </div>
-            <span>Loading review queue…</span>
-        </div>
-    `;
-    
+<div class="loader-container" style="padding: 32px 0;">
+    <div class="loader-dots">
+        <span></span><span></span><span></span>
+    </div>
+    <span>Loading review queue…</span>
+</div>
+`;
+
     try {
         const qs = state.documentId ? `?documentId=${state.documentId}` : "";
         const queue = await api(`/api/review-queue${qs}`).then((r) => r.json());
@@ -1431,56 +1431,56 @@ async function loadAndRenderReviewQueue() {
             return;
         }
 
-    const dueItems = queue.filter((i) => i.due);
-    const upcomingItems = queue.filter((i) => !i.due);
+        const dueItems = queue.filter((i) => i.due);
+        const upcomingItems = queue.filter((i) => !i.due);
 
-    const renderItem = (item, { showActions }) => {
-        const groupClass = `g${item.priorityGroup}`;
-        const text = item.type === "doubt"
-            ? `"${escapeHtml(item.data.passage)}"${item.data.note ? ` — ${escapeHtml(item.data.note)}` : ""}`
-            : `${escapeHtml(item.data.question)} — you answered "${escapeHtml(item.data.selectedOption || "")}" (correct: "${escapeHtml(item.data.correctOption || "")}")`;
+        const renderItem = (item, { showActions }) => {
+            const groupClass = `g${item.priorityGroup}`;
+            const text = item.type === "doubt"
+                ? `"${escapeHtml(item.data.passage)}"${item.data.note ? ` — ${escapeHtml(item.data.note)}` : ""}`
+                : `${escapeHtml(item.data.question)} — you answered "${escapeHtml(item.data.selectedOption || "")}" (correct: "${escapeHtml(item.data.correctOption || "")}")`;
 
-        const actions = showActions
-            ? `
+            const actions = showActions
+                ? `
 <div class="review-actions">
 <button class="btn btn-ghost review-mark" data-key="${escapeHtml(item.key)}" data-remembered="true">Got it</button>
 <button class="btn btn-ghost review-mark" data-key="${escapeHtml(item.key)}" data-remembered="false">Missed it</button>
 </div>`
-            : `<div class="review-upcoming-badge">Due in ${item.dueInDays} day${item.dueInDays === 1 ? "" : "s"}</div>`;
+                : `<div class="review-upcoming-badge">Due in ${item.dueInDays} day${item.dueInDays === 1 ? "" : "s"}</div>`;
 
-        return `
+            return `
 <div class="review-item">
 <span class="review-badge ${groupClass}">${escapeHtml(item.groupLabel)}</span>
 <div class="review-text">${text}</div>
 <div class="review-meta">${new Date(item.createdAt).toLocaleString()}</div>
 ${actions}
 </div>`;
-    };
+        };
 
-    let html = "";
-    if (dueItems.length) {
-        html += `<div class="review-section-label">Due now</div>`;
-        html += dueItems.map((i) => renderItem(i, { showActions: true })).join("");
-    }
-    if (upcomingItems.length) {
-        html += `<div class="review-section-label">Upcoming</div>`;
-        html += upcomingItems.map((i) => renderItem(i, { showActions: false })).join("");
-    }
-    container.innerHTML = html;
+        let html = "";
+        if (dueItems.length) {
+            html += `<div class="review-section-label">Due now</div>`;
+            html += dueItems.map((i) => renderItem(i, { showActions: true })).join("");
+        }
+        if (upcomingItems.length) {
+            html += `<div class="review-section-label">Upcoming</div>`;
+            html += upcomingItems.map((i) => renderItem(i, { showActions: false })).join("");
+        }
+        container.innerHTML = html;
 
-    container.querySelectorAll(".review-mark").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-            container.querySelectorAll(".review-mark").forEach((b) => (b.disabled = true));
-            await api("/api/review-queue/mark", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ key: btn.dataset.key, remembered: btn.dataset.remembered === "true" }),
+        container.querySelectorAll(".review-mark").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                container.querySelectorAll(".review-mark").forEach((b) => (b.disabled = true));
+                await api("/api/review-queue/mark", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ key: btn.dataset.key, remembered: btn.dataset.remembered === "true" }),
+                });
+                // Re-fetch so the item moves from "Due now" to "Upcoming" (or resets to
+                // day 1 if forgotten) — simplest way to stay in sync with the schedule.
+                loadAndRenderReviewQueue();
             });
-            // Re-fetch so the item moves from "Due now" to "Upcoming" (or resets to
-            // day 1 if forgotten) — simplest way to stay in sync with the schedule.
-            loadAndRenderReviewQueue();
         });
-    });
     } catch (err) {
         container.innerHTML = `<div class="empty-note">Failed to load review queue: ${err.message}</div>`;
     }
@@ -1827,12 +1827,12 @@ $("#btnDashboard").addEventListener("click", async () => {
         $("#quizProgressFill").style.width = "0%";
         $("#quizProgressLabel").textContent = "";
         quizOverlayBody.innerHTML = `
-            <div class="loader-container">
-                <div class="loader-pulse"></div>
-                <span>Loading learning overview…</span>
-            </div>
-        `;
-        
+<div class="loader-container">
+    <div class="loader-pulse"></div>
+    <span>Loading learning overview…</span>
+</div>
+`;
+
         // Fetch both dashboard data and confidence calibration in parallel.
         const [dashData, calData] = await Promise.all([
             api("/api/dashboard").then((r) => r.json()).catch(() => ({})),
@@ -1941,7 +1941,7 @@ $$(".tab").forEach((tab) => {
         const mode = tab.dataset.mode;
         $("#pdfPages").classList.toggle("hidden", mode !== "original");
         $("#textView").classList.toggle("hidden", mode !== "text");
-        
+
         // Update page progress when switching back to original mode
         if (mode === "original") {
             setTimeout(() => updatePageProgress(), 50);
@@ -1963,13 +1963,13 @@ $("#btnKeyTerms").addEventListener("click", async () => {
     if (!state.documentId) return;
     const list = $("#termList");
     list.innerHTML = `
-        <div class="loader-container" style="padding: 32px 0;">
-            <div class="loader-wave">
-                <span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <span style="margin-left: 12px;">Extracting key terms…</span>
-        </div>
-    `;
+<div class="loader-container" style="padding: 32px 0;">
+    <div class="loader-wave">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <span style="margin-left: 12px;">Extracting key terms…</span>
+</div>
+`;
     try {
         const res = await api(`/api/documents/${state.documentId}/key-terms`, { method: "POST" });
         const data = await res.json();
@@ -2064,11 +2064,11 @@ async function startQuiz(count, mode) {
     $("#quizProgressFill").style.width = "0%";
     $("#quizProgressLabel").textContent = "";
     quizOverlayBody.innerHTML = `
-        <div class="loader-container">
-            <div class="loader-rings"></div>
-            <span>Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</span>
-        </div>
-    `;
+<div class="loader-container">
+    <div class="loader-rings"></div>
+    <span>Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</span>
+</div>
+`;
 
     try {
         const res = await api(`/api/documents/${state.documentId}/quiz`, {
@@ -2333,13 +2333,13 @@ async function loadFollowUp(attemptId, questionIndex, triggerBtn) {
     const area = quizOverlayBody.querySelector(`.follow-up-area[data-qi="${questionIndex}"]`);
     triggerBtn.disabled = true;
     area.innerHTML = `
-        <div class="loader-container" style="padding: 16px 0;">
-            <div class="loader-dots">
-                <span></span><span></span><span></span>
-            </div>
-            <span>Generating a similar question…</span>
-        </div>
-    `;
+<div class="loader-container" style="padding: 16px 0;">
+    <div class="loader-dots">
+        <span></span><span></span><span></span>
+    </div>
+    <span>Generating a similar question…</span>
+</div>
+`;
 
     try {
         const res = await api(`/api/attempts/${attemptId}/follow-up`, {
