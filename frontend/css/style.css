@@ -283,10 +283,14 @@ html.ghost-text-visible .pdf-text-layer span {
   user-select: text;
   display: flex;
   align-items: center;
-  /* Make text faintly visible so native browser selection creates a visible blue highlight. */
-  color: rgba(28, 27, 34, 0.15);
+  color: transparent; /* ghost text invisible — only amber highlight and browser selection visible */
   pointer-events: auto;
   z-index: 3;
+}
+/* Hide ghost text inside browser native selection — only show the blue box. */
+.image-text-layer span::selection {
+  color: transparent;
+  background: rgba(59, 63, 224, 0.30);
 }
 /* Slight hover hint so users can discover selectable OCR words. */
 .image-text-layer span:hover {
@@ -294,18 +298,17 @@ html.ghost-text-visible .pdf-text-layer span {
   background: rgba(217, 166, 46, 0.12);
   border-radius: 3px;
 }
-/* Visual highlight for click-drag selected OCR words — matches the amber
-   right-click highlight but slightly more opaque so the selection is obvious. */
+/* Visual highlight for click-drag selected OCR words (amber/yellow box). */
 .image-text-layer span.ocr-selected {
-  color: rgba(28, 27, 34, 0.55);
+  color: transparent; /* keep text invisible inside amber box */
   background: rgba(217, 166, 46, 0.30);
   border-radius: 3px;
   outline: 1px solid rgba(217, 166, 46, 0.50);
 }
-/* Ensure the browser's native ::selection (blue highlight) is visible over our faint text. */
+/* Hide browser native selection on image OCR spans — only amber box visible. */
 .image-text-layer span::selection {
-  background: rgba(59, 63, 224, 0.35);
-  color: rgba(28, 27, 34, 0.7);
+  background: transparent;
+  color: transparent;
 }
 
 .text-view {

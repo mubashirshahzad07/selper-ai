@@ -350,7 +350,7 @@ function appendOcrSpans(layerEl, words) {
     span.style.top = `${(Number(b.y) || 0) * 100}%`;
     span.style.width = `${(Number(b.w) || 0) * 100}%`;
     span.style.height = `${(Number(b.h) || 0) * 100}%`;
-    span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, null));
+    span.addEventListener("contextmenu", (e) => onOcrWordContextMenu(e, span));
     layerEl.appendChild(span);
   }
 
@@ -438,6 +438,44 @@ function appendOcrSpans(layerEl, words) {
   layerEl.addEventListener("mouseleave", () => {
     if (isDragging) finishDrag(null);
   });
+}
+
+// Right-click handler for image OCR word spans — prioritizes amber (yellow)
+// ocr-selected spans over browser selection.
+function onOcrWordContextMenu(e, span) {
+  e.preventDefault();
+
+  const layerEl = span.closest(".image-text-layer");
+
+  // Priority 1: amber/yellow ocr-selected spans from click-drag.
+  const selectedSpans = layerEl?.querySelectorAll("span.ocr-selected");
+  if (selectedSpans && selectedSpans.length > 0) {
+    const words = [...selectedSpans].map((s) => s.textContent);
+    const selectedText = words.join(" ");
+    const context = surroundingContextFor(words[0], layerEl);
+    state.pendingSelection = { type: "passage", text: selectedText, context, anchorEl: selectedSpans[0] };
+    openContextMenu(e.clientX, e.clientY, { showSummarize: true });
+    return;
+  }
+
+  // Priority 2: browser native selection (blue box).
+  const sel = window.getSelection();
+  const selectedText = sel?.toString()?.trim();
+  if (selectedText && selectedText.length > 0) {
+    const context = surroundingContextFor(selectedText.split(/\s+/)[0], layerEl);
+    state.pendingSelection = { type: "passage", text: selectedText, context, anchorEl: sel.getRangeAt(0).cloneRange() };
+    openContextMenu(e.clientX, e.clientY, { showSummarize: true });
+    return;
+  }
+
+  // Priority 3: single word right-click.
+  const word = span.dataset.word;
+  if (!word) return;
+
+  paintHighlight(span);
+  const context = surroundingContextFor(word, span.parentElement);
+  state.pendingSelection = { type: "word", text: word, context, anchorEl: span };
+  openContextMenu(e.clientX, e.clientY, { showSummarize: false });
 }
 
 /**
@@ -593,6 +631,14 @@ function setZoom(next) {
       pagesEl.innerHTML = oldContent;
       pagesEl.style.visibility = "";
     });
+  } else if (state.isPdf === false && state.documentId) {
+    // Image document — scale the image wrapper via CSS transform so OCR word
+    // boxes (positioned as percentages) scale proportionally with the image.
+    const wrap = $("#pdfPages").querySelector(".image-page-wrap");
+    if (wrap) {
+      wrap.style.transform = `scale(${state.zoom})`;
+      wrap.style.transformOrigin = "top left";
+    }
   }
 }
 
@@ -635,7 +681,6 @@ function buildWordLayer(layerEl, textContent, viewport) {
       span.style.width = `${wWidth}px`;
       span.dataset.word = word.replace(/[^\w'-]/g, "");
 
-      span.addEventListener("contextmenu", (e) => onWordContextMenu(e, span, textContent));
       layerEl.appendChild(span);
     }
   }
@@ -647,6 +692,10 @@ function buildWordLayer(layerEl, textContent, viewport) {
 // delegation so it works across all pages and survives re-renders (zoom, etc.).
 // ---------------------------------------------------------------------------
 let pdfSelRect = null;
+// Persisted PDF selection — captured on mouseup so it survives the contextmenu
+// event clearing window.getSelection(). Used by onWordContextMenu to send the
+// full passage text to the AI instead of just the right-clicked word.
+let savedPdfSelection = null; // { text, context, range }
 
 function updatePdfSelectionHighlight() {
   if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
@@ -661,6 +710,13 @@ function updatePdfSelectionHighlight() {
   const range = sel.getRangeAt(0);
   const rects = range.getClientRects();
   if (!rects.length) return;
+
+  // Save the selection text + context so onWordContextMenu can use it later.
+  const selectedText = sel.toString().trim();
+  if (selectedText) {
+    const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
+    savedPdfSelection = { text: selectedText, context, range: range.cloneRange() };
+  }
 
   pdfSelRect = document.createElement("div");
   pdfSelRect.className = "pdf-custom-selection";
@@ -692,15 +748,51 @@ document.addEventListener("mouseup", () => {
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed && sel.anchorNode?.closest?.(".pdf-text-layer")) {
     updatePdfSelectionHighlight();
+  } else {
+    savedPdfSelection = null; // clear when clicking outside a selection
   }
 });
 document.addEventListener("selectionchange", () => {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) {
+    // Don't clear savedPdfSelection here — the contextmenu event may fire after
+    // selectionchange clears the browser selection. Only clear on mousedown.
     if (pdfSelRect) { pdfSelRect.remove(); pdfSelRect = null; }
   } else if (sel.anchorNode?.closest?.(".pdf-text-layer")) {
     updatePdfSelectionHighlight();
   }
+});
+// Clear saved selection on new mousedown (fresh interaction).
+document.addEventListener("mousedown", (e) => {
+  if (e.button === 0 && !e.target.closest(".context-menu") && !e.target.closest(".assist-card")) {
+    savedPdfSelection = null;
+  }
+});
+
+// Right-click context menu for PDF pages — captures the browser selection
+// at the moment of right-click, prevents the default menu, and shows our custom one.
+document.addEventListener("contextmenu", (e) => {
+  const pageWrap = e.target.closest?.(".pdf-page-wrap");
+  if (!pageWrap) return;
+
+  // Grab the live browser selection BEFORE preventDefault clears it.
+  const sel = window.getSelection();
+  const selectedText = sel?.toString()?.trim();
+  if (!selectedText) return; // no selection — let browser show its default menu
+
+  e.preventDefault();
+
+  const textLayer = pageWrap.querySelector(".pdf-text-layer");
+  const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
+  const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+
+  state.pendingSelection = {
+    type: "passage",
+    text: selectedText,
+    context,
+    anchorEl: range,
+  };
+  openContextMenu(e.clientX, e.clientY, { showSummarize: true });
 });
 
 function surroundingContextFor(word, layerEl) {
@@ -708,40 +800,6 @@ function surroundingContextFor(word, layerEl) {
   const container = layerEl?.parentElement || document;
   const spans = Array.from(container.querySelectorAll(".pdf-text-layer span, .image-text-layer span"));
   return spans.map((s) => s.textContent).join(" ").slice(0, 3000);
-}
-
-function onWordContextMenu(e, span, textContent) {
-  e.preventDefault();
-
-  // Check if there's an active browser text selection within the PDF text layer.
-  // Capture it BEFORE the context menu clears the selection.
-  const sel = window.getSelection();
-  const selectedText = sel?.toString()?.trim();
-  const hasPdfSelection = selectedText && selectedText.length > 0 && sel.anchorNode?.closest?.(".pdf-text-layer");
-
-  if (hasPdfSelection) {
-    // Preserve the passage selection — don't let single-word right-click overwrite it.
-    if (!state.pendingSelection || state.pendingSelection.type !== "passage") {
-      const layerEl = sel.anchorNode.closest(".pdf-text-layer");
-      const context = surroundingContextFor(selectedText.split(/\s+/)[0], layerEl);
-      state.pendingSelection = { type: "passage", text: selectedText, context, anchorEl: sel.getRangeAt(0).cloneRange() };
-    }
-    openContextMenu(e.clientX, e.clientY, { showSummarize: true });
-    return;
-  }
-
-  // Single-word right-click: only set pendingSelection if no passage is already selected.
-  if (!state.pendingSelection || state.pendingSelection.type !== "passage") {
-    const word = span.dataset.word;
-    if (!word) return;
-
-    paintHighlight(span);
-
-    const context = surroundingContextFor(word, span.parentElement);
-
-    state.pendingSelection = { type: "word", text: word, context, anchorEl: span };
-  }
-  openContextMenu(e.clientX, e.clientY, { showSummarize: false });
 }
 
 /** Draws the rounded-corner highlight and remembers it so it can be cleared later. */
