@@ -152,9 +152,47 @@ function setStatus(text) {
   $("#statusLine").textContent = text;
 }
 
+// Clicking the Study Helper logo returns to the home (upload) page.
+function goHome() {
+  closeAssistCard();
+  closeContextMenu();
+  closeDrawers();
+  closeQuizOverlay();
+  const doubtModal = $("#doubtModal");
+  if (doubtModal) doubtModal.classList.add("hidden");
+  $("#readerStage").classList.add("hidden");
+  $("#uploadStage").classList.remove("hidden");
+  $("#pdfPages").innerHTML = "";
+  $("#pdfPages").classList.remove("hidden");
+  $("#textView").textContent = "";
+  $("#textView").classList.add("hidden");
+  $("#docTitle").textContent = "—";
+  $("#zoomLabel").textContent = "100%";
+  // Ensure original tab is active when returning
+  $$(".reader-tabs .tab").forEach((t) => t.classList.toggle("active", t.dataset.mode === "original"));
+  state.documentId = null;
+  state.filename = null;
+  state.isPdf = false;
+  state.extractedText = "";
+  state.pendingSelection = null;
+  state.pdfOcr = null;
+  state.zoom = 1;
+  pdfDoc = null;
+  baseScale = 1;
+  updateZoomButtons();
+  setStatus("Source-preserving study workspace");
+  // Reset file input so the same file can be re-uploaded if desired
+  const fi = $("#fileInput");
+  if (fi) fi.value = "";
+}
+
+$(".brand")?.addEventListener("click", goHome);
+
 // ---------------------------------------------------------------- PDF rendering with word-level text layer
-const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 2.5;
+// Keep zoom in a range where text stays fully readable and no words are
+// clipped off the edges of the page/viewport. 60%–200% is the practical band.
+const ZOOM_MIN = 0.6;
+const ZOOM_MAX = 2.0;
 const ZOOM_STEP = 0.15;
 
 let pdfDoc = null;
@@ -463,17 +501,61 @@ async function renderAllPages() {
   applyPdfOcrLayers();
 }
 
+function updateZoomButtons() {
+  const zin = $("#zoomIn");
+  const zout = $("#zoomOut");
+  if (zin) zin.disabled = state.zoom >= ZOOM_MAX - 1e-6;
+  if (zout) zout.disabled = state.zoom <= ZOOM_MIN + 1e-6;
+}
+
 function setZoom(next) {
+  const prevZoom = state.zoom;
   state.zoom = Math.min(Math.max(next, ZOOM_MIN), ZOOM_MAX);
   $("#zoomLabel").textContent = `${Math.round(state.zoom * 100)}%`;
+  updateZoomButtons();
+  if (state.zoom === prevZoom) return;
   closeAssistCard();
   if (pdfDoc) {
-    // Keep the reader's vertical position stable across the re-render so a
-    // zoom change doesn't throw the student back to the top of the document.
+    // Preserve the visual center of the viewport across the re-render so zoom
+    // happens "in place" instead of jumping to a different page or flickering
+    // the student back to the top. We identify which page is under the center
+    // of the scrollport and the fractional offset within that page, then
+    // restore the same page + offset after the new pages are drawn.
     const scrollEl = $("#pdfScroll");
-    const ratio = scrollEl.scrollHeight > 0 ? scrollEl.scrollTop / scrollEl.scrollHeight : 0;
+    const centerY = scrollEl.scrollTop + scrollEl.clientHeight / 2;
+    const pages = [...scrollEl.querySelectorAll(".pdf-page-wrap")];
+    let anchorPage = 1;
+    let anchorFrac = 0;
+    for (const wrap of pages) {
+      const top = wrap.offsetTop;
+      const h = wrap.offsetHeight || 1;
+      if (centerY >= top && centerY < top + h) {
+        anchorPage = parseInt(wrap.dataset.page, 10) || 1;
+        anchorFrac = (centerY - top) / h;
+        break;
+      }
+      // If center is past the last page, clamp to it
+      if (wrap === pages[pages.length - 1] && centerY >= top + h) {
+        anchorPage = parseInt(wrap.dataset.page, 10) || 1;
+        anchorFrac = 1;
+      }
+    }
+
+    // Hide old content only after we have the new one ready, to reduce flicker.
+    const pagesEl = $("#pdfPages");
+    const oldContent = pagesEl.innerHTML;
+    pagesEl.style.visibility = "hidden";
+
     renderAllPages().then(() => {
-      scrollEl.scrollTop = ratio * scrollEl.scrollHeight;
+      const newWrap = pagesEl.querySelector(`.pdf-page-wrap[data-page="${anchorPage}"]`);
+      if (newWrap) {
+        const targetTop = newWrap.offsetTop + anchorFrac * newWrap.offsetHeight - scrollEl.clientHeight / 2;
+        scrollEl.scrollTop = Math.max(0, targetTop);
+      }
+      pagesEl.style.visibility = "";
+    }).catch(() => {
+      pagesEl.innerHTML = oldContent;
+      pagesEl.style.visibility = "";
     });
   }
 }
@@ -481,6 +563,7 @@ function setZoom(next) {
 $("#zoomIn")?.addEventListener("click", () => setZoom(state.zoom + ZOOM_STEP));
 $("#zoomOut")?.addEventListener("click", () => setZoom(state.zoom - ZOOM_STEP));
 $("#zoomReset")?.addEventListener("click", () => setZoom(1));
+updateZoomButtons();
 
 // Build one absolutely-positioned span PER WORD, so right-click always
 // targets a single word (PRD 5.2 / "Low interaction cost").

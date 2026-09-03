@@ -51,7 +51,7 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   z-index: 40;
 }
-.brand { display: flex; align-items: center; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .brand-mark {
   width: 30px; height: 30px;
   border-radius: 8px;
@@ -187,7 +187,8 @@ button { font-family: inherit; cursor: pointer; }
   display: flex; align-items: center; justify-content: center;
   transition: background .15s var(--ease);
 }
-.zoom-controls button:hover { background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.zoom-controls button:hover:not(:disabled) { background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.zoom-controls button:disabled { opacity: 0.35; cursor: default; }
 .zoom-controls .zoom-reset { width: auto; padding: 0 10px; font-size: 11.5px; font-weight: 500; }
 #zoomLabel { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); width: 40px; text-align: center; }
 

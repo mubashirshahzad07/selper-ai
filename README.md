@@ -120,3 +120,14 @@ calibration, and now the full cross-origin plumbing — has been.
   production traffic; the `repositories/store.js` interface is deliberately thin so swapping in a
   real DB later shouldn't require touching the routes.
 - No authentication — guest sessions only, matching the PRD's stated "not yet required."
+
+## Recent UI fixes
+
+1. **Logo → home** — Clicking the Study Helper logo (brand mark + name) in the top bar now
+   returns the user to the home/upload page, clearing the current document, zoom, and any open
+   overlays/drawers/modals.
+2. **Zoom in place** — Zooming no longer flickers or loses the current page. The viewport center
+   is used as an anchor (page + fractional offset within that page); after re-render the same
+   point is restored, so the document zooms around the content the student was looking at.
+3. **Zoom limits** — Zoom is clamped to 60%–200% so text stays fully readable and no words are
+   cut off at extreme scales. The + / − buttons disable at the limits.
