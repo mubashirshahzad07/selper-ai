@@ -126,22 +126,20 @@ calibration, and now the full cross-origin plumbing — has been.
 1. **Logo → home** — Clicking the Study Helper logo (brand mark + name) in the top bar now
    returns the user to the home/upload page, clearing the current document, zoom, and any open
    overlays/drawers/modals.
-2. **Zoom in place** — Zooming no longer flickers or loses the current page. The viewport center
-   is used as an anchor (page + fractional offset within that page); after re-render the same
-   point is restored, so the document zooms around the content the student was looking at.
-3. **Zoom limits** — Zoom is clamped to 60%–200% so text stays fully readable and no words are
-   cut off at extreme scales. The + / − buttons disable at the limits.
-4. **Dark / light mode** — Theme toggle (☾ / ☀) in the top bar. Preference is saved in
+2. **Instant flicker-free zoom** — Zooming executes immediately in place with zero flicker or blanking. Pages scale instantly via hardware-accelerated transforms and dimensions (0ms response), while high-DPI sharp canvases render in the background using non-destructive off-screen canvas swaps and cached text extraction. The viewport center anchor is seamlessly maintained.
+3. **Dynamic zoom limits** — Replaced the static 200% zoom cap with dynamic ceiling calculation based on the visible reading viewport width and actual text/word boundary bounds across pages. Zooming in allows maximum readable expansion up to the exact point where words would otherwise clip or slip under adjacent window panes.
+4. **Uniform page sizing across study material** — Page widths remain strictly uniform across all pages of the study material during both zoom in and zoom out operations, eliminating variable or mismatched page widths across the document.
+5. **Dark / light mode** — Theme toggle (☾ / ☀) in the top bar. Preference is saved in
    `localStorage` and falls back to the OS `prefers-color-scheme` on first visit. All CSS
    tokens are theme-aware via `html[data-theme="dark"]`.
-5. **AI reliability** — Interactive Gemini calls (define / summarize / translate / key terms)
+6. **AI reliability** — Interactive Gemini calls (define / summarize / translate / key terms)
    now use a single fast retry with short backoff; clearer error messages when the API key is
    missing, the model blocks content, or the backend is unreachable; markdown-fenced JSON
    responses are unwrapped automatically.
-6. **Lower latency** — Tighter prompt context windows, lower timeouts for interactive actions,
+7. **Lower latency** — Tighter prompt context windows, lower timeouts for interactive actions,
    in-memory definition cache (re-looking up the same word is instant), faster Manus task
    polling (1.5s interval), and clearer network-error messages pointing at the backend URL.
-7. **UI polish** — Theme toggle control, smoother color transitions, theme-aware surfaces.
-8. **Dark-mode quiz contrast** — Quiz questions, options, explanations, and results use
+8. **UI polish** — Theme toggle control, smoother color transitions, theme-aware surfaces.
+9. **Dark-mode quiz contrast** — Quiz questions, options, explanations, and results use
    theme-aware text/background tokens so content stays readable in dark mode (no more
    light-green/red washes that hide text).
