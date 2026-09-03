@@ -143,3 +143,35 @@ calibration, and now the full cross-origin plumbing — has been.
 9. **Dark-mode quiz contrast** — Quiz questions, options, explanations, and results use
    theme-aware text/background tokens so content stays readable in dark mode (no more
    light-green/red washes that hide text).
+10. **Vibrant green color palette & student-focused UI redesign** — Complete visual overhaul with
+    a calming green/mint color scheme optimized for study focus:
+    - New CSS variables: `--mint`, `--success`, `--mint-soft`, `--success-soft` alongside existing colors
+    - Light mode uses forest green (`#2E7D5C`) as primary accent; dark mode uses bright mint (`#4CAF7D`)
+    - Subtle gradients on backgrounds (toolbars, drawers, modals) for depth without distraction
+    - Topbar navigation reorganized: primary actions (Dashboard, Review) highlighted with mint borders;
+      secondary actions (Quiz, Doubts, History) smaller and less prominent; Settings restored as text button
+    - Upload stage enhanced with gradient headline text, green hover effects, centered subtitle
+    - Reader toolbar shows mint gradient background with green active tabs
+    - Tools pane redesigned with mint-tinted backgrounds and hover glow effects on term cards
+    - Quiz overlay uses calming mint gradients with thicker progress bar and green-correct feedback
+    - All drawers/modals updated with consistent green theming and hover states
+    - Context menu and assist card use green accents for better discoverability
+11. **Page progress indicator** — Real-time reading progress displayed in reader toolbar:
+    - Shows current page number / total pages + percentage complete (e.g., "12 / 45 • 27%")
+    - Pill-shaped badge with gradient background positioned in center of toolbar
+    - Automatically updates on scroll, zoom changes, and mode switches
+    - Calculates visible page based on viewport midpoint for accurate tracking
+    - For images: displays "1 / 1 • 100%" consistently
+    - Resets to "0 / 0 • 0%" when clearing documents
+    - Increased spacing between page numbers and percentage for better readability
+    - Helps students monitor their reading progress at a glance
+
+## Design Philosophy
+
+The recent UI changes follow three core principles for student-focused learning:
+
+1. **Color psychology** — Green promotes calmness, growth, and sustained focus; reduces eye strain during long study sessions
+2. **Visual hierarchy** — Primary actions are more prominent than secondary ones; reduces cognitive load and decision fatigue
+3. **Subtle depth** — Gradients and soft shadows add visual interest without competing for attention; maintains clean, distraction-free reading environment
+
+All interactive elements provide consistent green-themed feedback on hover/selection. The design intentionally avoids harsh color changes or high-contrast elements that could break concentration during focused study work.

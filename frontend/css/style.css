@@ -235,6 +235,25 @@ min-width: 0;
     background: linear-gradient(to right, var(--surface), var(--mint-soft));
 }
 .doc-title { font-weight: 600; font-size: 14px; flex-shrink: 0; color: var(--accent); }
+.page-progress {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 13px;
+    background: linear-gradient(135deg, var(--success-soft), var(--mint-soft));
+    padding: 6px 14px;
+    border-radius: 999px; 
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(76, 175, 125, 0.15);
+    border: 1px solid var(--mint-soft);
+}
+.page-current { font-weight: 700; color: var(--accent); font-size: 14px; }
+.page-separator { color: var(--ink-soft); font-weight: 500; }
+.page-total { color: var(--ink-soft); font-weight: 500; }
+.page-percent { 
+    font-weight: 700; 
+    color: var(--success);
+    margin-left: 12px;
+    font-size: 14px;
+}
 .reader-tabs { display: flex; gap: 4px; background: var(--paper); padding: 3px; border-radius: 8px; }
 .tab {
     border: none; background: transparent; padding: 6px 14px;

@@ -171,6 +171,9 @@ async function handleUpload(file) {
         // asynchronously by client-side Tesseract below.
         renderImageWithOcr(imageUrl, full.ocrData);
         setStatus(`${doc.filename} · original layout`);
+        
+        // Set page progress to 1/1 for images
+        setPageProgressForImage();
 
         // Client-side Tesseract fills the selectable word layer without blocking.
         ocrImageClientSide(imageUrl).then((words) => {
@@ -344,6 +347,8 @@ async function renderPdf(url) {
 
     computeDynamicMaxZoom();
     await renderAllPages();
+    // Initialize page progress indicator
+    updatePageProgress();
 }
 
 /**
@@ -789,6 +794,9 @@ function setZoom(next) {
             scrollEl.scrollTop = Math.max(0, targetTop);
         }
 
+        // Update page progress after zoom change
+        setTimeout(() => updatePageProgress(), 50);
+
         // 2. Background sharp re-render (non-destructive canvas swap with zero flicker)
         if (debounceRenderTimer) clearTimeout(debounceRenderTimer);
         debounceRenderTimer = setTimeout(() => {
@@ -1167,7 +1175,71 @@ function positionAssistCard() {
 // the window resizes, instead of freezing at its original screen position.
 function trackAnchorOnScroll() {
     if (!assistCard.classList.contains("hidden")) positionAssistCard();
+    updatePageProgress();
 }
+
+function updatePageProgress() {
+    const scrollContainer = $("#pdfScroll");
+    if (!scrollContainer || !pdfDoc) return;
+    
+    const pages = scrollContainer.querySelectorAll(".pdf-page-wrap");
+    if (pages.length === 0) return;
+    
+    const scrollTop = scrollContainer.scrollTop;
+    const containerHeight = scrollContainer.clientHeight;
+    const midpoint = scrollTop + (containerHeight / 2);
+    
+    let currentPageNum = 1;
+    
+    // Find which page is currently in view (at the midpoint of viewport)
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const pageTop = page.offsetTop;
+        const pageBottom = pageTop + page.offsetHeight;
+        
+        if (midpoint >= pageTop && midpoint <= pageBottom) {
+            currentPageNum = parseInt(page.dataset.page);
+            break;
+        } else if (midpoint > pageBottom) {
+            currentPageNum = parseInt(page.dataset.page);
+        }
+    }
+    
+    const totalPages = pdfDoc.numPages;
+    const percent = Math.round((currentPageNum / totalPages) * 100);
+    
+    // Update the display
+    const pageCurrentEl = $("#pageCurrent");
+    const pageTotalEl = $("#pageTotal");
+    const pagePercentEl = $("#pagePercent");
+    
+    if (pageCurrentEl) pageCurrentEl.textContent = currentPageNum;
+    if (pageTotalEl) pageTotalEl.textContent = totalPages;
+    if (pagePercentEl) pagePercentEl.textContent = `${percent}%`;
+}
+
+function setPageProgressForImage() {
+    // For images, always show 1/1 and 100%
+    const pageCurrentEl = $("#pageCurrent");
+    const pageTotalEl = $("#pageTotal");
+    const pagePercentEl = $("#pagePercent");
+    
+    if (pageCurrentEl) pageCurrentEl.textContent = "1";
+    if (pageTotalEl) pageTotalEl.textContent = "1";
+    if (pagePercentEl) pagePercentEl.textContent = "100%";
+}
+
+function resetPageProgress() {
+    // Reset to 0/0 and 0% when no document is loaded
+    const pageCurrentEl = $("#pageCurrent");
+    const pageTotalEl = $("#pageTotal");
+    const pagePercentEl = $("#pagePercent");
+    
+    if (pageCurrentEl) pageCurrentEl.textContent = "0";
+    if (pageTotalEl) pageTotalEl.textContent = "0";
+    if (pagePercentEl) pagePercentEl.textContent = "0%";
+}
+
 $("#pdfScroll").addEventListener("scroll", trackAnchorOnScroll, { passive: true });
 window.addEventListener("scroll", trackAnchorOnScroll, { passive: true });
 window.addEventListener("resize", trackAnchorOnScroll);
@@ -1660,6 +1732,7 @@ document.addEventListener("click", async (e) => {
                     $("#readerStage").classList.add("hidden");
                     $("#pdfPages").innerHTML = "";
                     $("#textView").textContent = "";
+                    resetPageProgress();
                 }
             }, 2000);
         } else {
@@ -1834,6 +1907,11 @@ $$(".tab").forEach((tab) => {
         const mode = tab.dataset.mode;
         $("#pdfPages").classList.toggle("hidden", mode !== "original");
         $("#textView").classList.toggle("hidden", mode !== "text");
+        
+        // Update page progress when switching back to original mode
+        if (mode === "original") {
+            setTimeout(() => updatePageProgress(), 50);
+        }
     });
 });
 
