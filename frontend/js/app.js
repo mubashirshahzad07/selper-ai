@@ -1283,7 +1283,14 @@ ${wikiLink}
 async function runSummarize() {
     const { text, context } = state.pendingSelection;
     positionAssistCard();
-    assistBody.innerHTML = `<div class="assist-loading"><span class="spinner"></span> Summarizing from source context…</div>`;
+    assistBody.innerHTML = `
+        <div class="loader-container" style="padding: 16px 0;">
+            <div class="loader-bounce">
+                <span></span><span></span><span></span>
+            </div>
+            <span>Summarizing from source context…</span>
+        </div>
+    `;
     assistCard.classList.remove("hidden");
 
     try {
@@ -1307,7 +1314,14 @@ async function runSummarize() {
 async function runTranslate() {
     const { text } = state.pendingSelection;
     positionAssistCard();
-    assistBody.innerHTML = `<div class="assist-loading"><span class="spinner"></span> Translating to Urdu…</div>`;
+    assistBody.innerHTML = `
+        <div class="loader-container" style="padding: 16px 0;">
+            <div class="loader-bounce">
+                <span></span><span></span><span></span>
+            </div>
+            <span>Translating to Urdu…</span>
+        </div>
+    `;
     assistCard.classList.remove("hidden");
 
     try {
@@ -1398,14 +1412,24 @@ $("#btnReview").addEventListener("click", async () => {
 });
 
 async function loadAndRenderReviewQueue() {
-    const qs = state.documentId ? `?documentId=${state.documentId}` : "";
-    const queue = await api(`/api/review-queue${qs}`).then((r) => r.json());
     const container = $("#reviewList");
+    container.innerHTML = `
+        <div class="loader-container" style="padding: 32px 0;">
+            <div class="loader-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <span>Loading review queue…</span>
+        </div>
+    `;
+    
+    try {
+        const qs = state.documentId ? `?documentId=${state.documentId}` : "";
+        const queue = await api(`/api/review-queue${qs}`).then((r) => r.json());
 
-    if (!queue.length) {
-        container.innerHTML = `<div class="empty-note">Nothing to review yet. Take a quiz or save a doubt.</div>`;
-        return;
-    }
+        if (!queue.length) {
+            container.innerHTML = `<div class="empty-note">Nothing to review yet. Take a quiz or save a doubt.</div>`;
+            return;
+        }
 
     const dueItems = queue.filter((i) => i.due);
     const upcomingItems = queue.filter((i) => !i.due);
@@ -1457,6 +1481,9 @@ ${actions}
             loadAndRenderReviewQueue();
         });
     });
+    } catch (err) {
+        container.innerHTML = `<div class="empty-note">Failed to load review queue: ${err.message}</div>`;
+    }
 }
 
 // ---------------------------------------------------------------- confidence calibration
@@ -1796,14 +1823,21 @@ function renderDebugLog() {
 // ---------------------------------------------------------------- dashboard — learning overview
 $("#btnDashboard").addEventListener("click", async () => {
     try {
+        openQuizOverlay();
+        $("#quizProgressFill").style.width = "0%";
+        $("#quizProgressLabel").textContent = "";
+        quizOverlayBody.innerHTML = `
+            <div class="loader-container">
+                <div class="loader-pulse"></div>
+                <span>Loading learning overview…</span>
+            </div>
+        `;
+        
         // Fetch both dashboard data and confidence calibration in parallel.
         const [dashData, calData] = await Promise.all([
             api("/api/dashboard").then((r) => r.json()).catch(() => ({})),
             api("/api/calibration").then((r) => r.json()).catch(() => ({})),
         ]);
-        openQuizOverlay(); // reuse the full-screen quiz overlay for dashboard
-        $("#quizProgressFill").style.width = "0%";
-        $("#quizProgressLabel").textContent = "";
         renderFullDashboard(dashData || {}, calData || {});
     } catch (err) {
         console.error("Dashboard error:", err);
@@ -1928,7 +1962,14 @@ $$(".tools-tab").forEach((tab) => {
 $("#btnKeyTerms").addEventListener("click", async () => {
     if (!state.documentId) return;
     const list = $("#termList");
-    list.innerHTML = `<div class="empty-note">Extracting key terms…</div>`;
+    list.innerHTML = `
+        <div class="loader-container" style="padding: 32px 0;">
+            <div class="loader-wave">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span style="margin-left: 12px;">Extracting key terms…</span>
+        </div>
+    `;
     try {
         const res = await api(`/api/documents/${state.documentId}/key-terms`, { method: "POST" });
         const data = await res.json();
@@ -2022,7 +2063,12 @@ async function startQuiz(count, mode) {
     openQuizOverlay();
     $("#quizProgressFill").style.width = "0%";
     $("#quizProgressLabel").textContent = "";
-    quizOverlayBody.innerHTML = `<div class="empty-note">Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</div>`;
+    quizOverlayBody.innerHTML = `
+        <div class="loader-container">
+            <div class="loader-rings"></div>
+            <span>Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</span>
+        </div>
+    `;
 
     try {
         const res = await api(`/api/documents/${state.documentId}/quiz`, {
@@ -2286,7 +2332,14 @@ function showGradingCompleteToast(attempt) {
 async function loadFollowUp(attemptId, questionIndex, triggerBtn) {
     const area = quizOverlayBody.querySelector(`.follow-up-area[data-qi="${questionIndex}"]`);
     triggerBtn.disabled = true;
-    area.innerHTML = `<div class="empty-note">Generating a similar question…</div>`;
+    area.innerHTML = `
+        <div class="loader-container" style="padding: 16px 0;">
+            <div class="loader-dots">
+                <span></span><span></span><span></span>
+            </div>
+            <span>Generating a similar question…</span>
+        </div>
+    `;
 
     try {
         const res = await api(`/api/attempts/${attemptId}/follow-up`, {

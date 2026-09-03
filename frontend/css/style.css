@@ -676,6 +676,128 @@ original word stays legible underneath it. */
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------------------------------------------------------------- modern loaders */
+.loader-container {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 24px; font-size: 13px; color: var(--ink-soft);
+}
+
+/* Elegant multi-ring loader for quiz generation */
+.loader-rings {
+    position: relative;
+    width: 48px; height: 48px;
+}
+.loader-rings::before,
+.loader-rings::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid transparent;
+}
+.loader-rings::before {
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-top-color: var(--accent);
+    border-right-color: var(--mint);
+    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+.loader-rings::after {
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border-bottom-color: var(--success);
+    border-left-color: var(--accent);
+    animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse;
+}
+
+/* Dots loader for OCR processing */
+.loader-dots {
+    display: flex; gap: 6px; align-items: center;
+}
+.loader-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: dotPulse 1.4s ease-in-out infinite;
+}
+.loader-dots span:nth-child(2) { animation-delay: 0.16s; }
+.loader-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes dotPulse {
+    0%, 80%, 100% { 
+        transform: scale(0.6); 
+        opacity: 0.5; 
+    }
+    40% { 
+        transform: scale(1.2); 
+        opacity: 1; 
+    }
+}
+
+/* Wave loader for key terms extraction */
+.loader-wave {
+    display: flex; gap: 4px; align-items: center; height: 32px;
+}
+.loader-wave span {
+    width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(to top, var(--accent), var(--mint));
+    animation: wave 1.2s ease-in-out infinite;
+}
+.loader-wave span:nth-child(1) { animation-delay: 0s; height: 12px; }
+.loader-wave span:nth-child(2) { animation-delay: 0.1s; height: 18px; }
+.loader-wave span:nth-child(3) { animation-delay: 0.2s; height: 24px; }
+.loader-wave span:nth-child(4) { animation-delay: 0.3s; height: 18px; }
+.loader-wave span:nth-child(5) { animation-delay: 0.4s; height: 12px; }
+
+@keyframes wave {
+    0%, 100% { transform: scaleY(0.5); opacity: 0.6; }
+    50% { transform: scaleY(1.2); opacity: 1; }
+}
+
+/* Pulse loader for general operations */
+.loader-pulse {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent) 0%, var(--mint) 100%);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        transform: scale(0.8); 
+        opacity: 0.6;
+        box-shadow: 0 0 0 0 rgba(46, 125, 92, 0.4);
+    }
+    50% { 
+        transform: scale(1); 
+        opacity: 1;
+        box-shadow: 0 0 0 12px rgba(46, 125, 92, 0);
+    }
+}
+
+/* Bouncing loader for lightweight operations */
+.loader-bounce {
+    display: flex; gap: 8px; align-items: center;
+}
+.loader-bounce span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: bounce 1.4s ease-in-out infinite;
+}
+.loader-bounce span:nth-child(1) { animation-delay: 0s; }
+.loader-bounce span:nth-child(2) { animation-delay: 0.16s; }
+.loader-bounce span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { 
+        transform: translateY(0);
+        background: var(--success);
+    }
+    40% { 
+        transform: translateY(-12px);
+        background: var(--accent);
+    }
+}
+
 /* ---------------------------------------------------------------- grading toast */
 .grading-toast {
     position: fixed;

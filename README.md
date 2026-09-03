@@ -165,6 +165,17 @@ calibration, and now the full cross-origin plumbing — has been.
     - Resets to "0 / 0 • 0%" when clearing documents
     - Increased spacing between page numbers and percentage for better readability
     - Helps students monitor their reading progress at a glance
+12. **Beautiful loading animations** — Elegant, modern loaders for all async operations:
+    - **Quiz generation**: Dual-ring spinner with green/mint gradient rotation
+    - **Key terms extraction**: Wave animation with gradient bars
+    - **Follow-up questions**: Pulsing dots loader
+    - **Define/Summarize/Translate**: Bouncing balls with color transitions
+    - **Dashboard loading**: Radial pulse animation with expanding shadow
+    - **Doubt notebook & Review queue**: Dots loader with staggered timing
+    - All loaders use the green color palette for consistency
+    - Smooth animations with cubic-bezier easing for professional feel
+    - Loading states provide clear feedback without visual distraction
+    - Fixed smart quote encoding issues that broke JavaScript execution
 
 ## Design Philosophy
 
