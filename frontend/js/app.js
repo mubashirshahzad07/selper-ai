@@ -746,8 +746,21 @@ function updatePdfSelectionHighlight() {
 // Single global listener — no per-page binding needed.
 document.addEventListener("mouseup", () => {
   const sel = window.getSelection();
-  if (sel && !sel.isCollapsed && sel.anchorNode?.closest?.(".pdf-text-layer")) {
-    updatePdfSelectionHighlight();
+  if (sel && !sel.isCollapsed) {
+    // Capture selection for both PDF and image layers.
+    const textLayer = sel.anchorNode?.closest?.(".pdf-text-layer");
+    const imageLayer = sel.anchorNode?.closest?.(".image-text-layer");
+    if (textLayer) {
+      updatePdfSelectionHighlight();
+      // Also save for contextmenu use.
+      const selectedText = sel.toString().trim();
+      if (selectedText) {
+        const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
+        savedPdfSelection = { text: selectedText, context, range: sel.getRangeAt(0).cloneRange() };
+      }
+    } else if (imageLayer) {
+      // Image OCR selection is handled by appendOcrSpans drag logic.
+    }
   } else {
     savedPdfSelection = null; // clear when clicking outside a selection
   }
@@ -769,22 +782,27 @@ document.addEventListener("mousedown", (e) => {
   }
 });
 
-// Right-click context menu for PDF pages — captures the browser selection
-// at the moment of right-click, prevents the default menu, and shows our custom one.
+// Right-click context menu for PDF pages — uses savedPdfSelection (captured on mouseup)
+// since window.getSelection() may be cleared by the time contextmenu fires.
 document.addEventListener("contextmenu", (e) => {
   const pageWrap = e.target.closest?.(".pdf-page-wrap");
   if (!pageWrap) return;
 
-  // Grab the live browser selection BEFORE preventDefault clears it.
+  // Try live selection first, fall back to savedPdfSelection from mouseup.
   const sel = window.getSelection();
-  const selectedText = sel?.toString()?.trim();
+  let selectedText = sel?.toString()?.trim();
+  let range = sel?.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+
+  if (!selectedText && savedPdfSelection?.text) {
+    selectedText = savedPdfSelection.text;
+    range = savedPdfSelection.range;
+  }
   if (!selectedText) return; // no selection — let browser show its default menu
 
   e.preventDefault();
 
   const textLayer = pageWrap.querySelector(".pdf-text-layer");
-  const context = surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
-  const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+  const context = savedPdfSelection?.context || surroundingContextFor(selectedText.split(/\s+/)[0], textLayer);
 
   state.pendingSelection = {
     type: "passage",
@@ -1146,12 +1164,12 @@ async function loadAndRenderReviewQueue() {
 }
 
 // ---------------------------------------------------------------- confidence calibration
-// Not another score — whether "I know this" actually tracks being right.
-$("#btnCalibration").addEventListener("click", async () => {
+// (Moved into Dashboard drawer; guarded in case old element is re-added)
+$("#btnCalibration")?.addEventListener("click", async () => {
   const qs = state.documentId ? `?documentId=${state.documentId}` : "";
   const data = await api(`/api/calibration${qs}`).then((r) => r.json());
-  $("#calibrationBody").innerHTML = renderCalibration(data);
-  openDrawer($("#calibrationDrawer"));
+  if ($("#calibrationBody")) $("#calibrationBody").innerHTML = renderCalibration(data);
+  if ($("#calibrationDrawer")) openDrawer($("#calibrationDrawer"));
 });
 
 function renderCalibration(data) {
@@ -1311,11 +1329,25 @@ function renderSettings(s) {
         <div><strong>API key set:</strong> ${s.manusApiKeySet ? `Yes (${s.manusApiKeyLength} chars)` : "No"}</div>
       </div>
     </div>
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:24px">
       <label style="display:block;font-size:13px;margin-bottom:6px;font-weight:500">Override Manus API Key</label>
       <input id="settingsManusKeyInput" type="password" placeholder="Paste new key…" style="width:100%;padding:8px;border:1px solid var(--hairline);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px" />
       <button class="btn btn-primary btn-block" id="settingsSaveManusKeyBtn" data-provider="manus">Save Key (session only)</button>
       <p style="font-size:11px;color:var(--ink-soft);margin-top:6px">This overrides the key in-memory only. It does NOT persist to .env and will be lost on server restart.</p>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--hairline);margin:0 0 20px" />
+
+    <div style="margin-bottom:20px">
+      <h4 style="margin:0 0 8px;font-size:14px">Data Management</h4>
+      <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Clear cached data for this session. Uploaded files remain on disk until server restart.</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-ghost" id="settingsClearDocuments" style="text-align:left;border-color:var(--wrong);color:var(--wrong)">🗑 Clear all documents & uploads</button>
+        <button class="btn btn-ghost" id="settingsClearQuizzes" style="text-align:left;border-color:var(--amber);color:var(--amber)">🗑 Clear quiz history & attempts</button>
+        <button class="btn btn-ghost" id="settingsClearDoubts" style="text-align:left;border-color:var(--accent);color:var(--accent)">🗑 Clear doubt notebook</button>
+        <button class="btn btn-ghost" id="settingsClearAll" style="text-align:left;border-color:var(--ink);color:var(--ink)">🗑 Clear ALL session data</button>
+      </div>
+      <p style="font-size:11px;color:var(--ink-soft);margin-top:8px">These actions are irreversible for the current session.</p>
     </div>
   `;
 }
@@ -1357,6 +1389,79 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+// Data management clear buttons — also attached dynamically via delegation.
+document.addEventListener("click", async (e) => {
+  const clearBtn = e.target.closest("#settingsClearDocuments, #settingsClearQuizzes, #settingsClearDoubts, #settingsClearAll");
+  if (!clearBtn) return;
+
+  const scopeMap = {
+    settingsClearDocuments: "documents",
+    settingsClearQuizzes: "quizzes",
+    settingsClearDoubts: "doubts",
+    settingsClearAll: "all",
+  };
+  const scope = scopeMap[clearBtn.id];
+  if (!scope) return;
+
+  const labels = { documents: "documents & uploads", quizzes: "quiz history & attempts", doubts: "doubt notebook", all: "ALL session data" };
+  if (!confirm(`Are you sure you want to clear ${labels[scope]}? This cannot be undone.`)) return;
+
+  const origText = clearBtn.textContent;
+  clearBtn.disabled = true;
+  clearBtn.textContent = "Clearing…";
+  try {
+    const res = await api("/api/settings/clear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      clearBtn.textContent = "✓ Cleared";
+      clearBtn.style.background = "var(--correct)";
+      clearBtn.style.color = "#fff";
+      setTimeout(() => {
+        clearBtn.disabled = false;
+        clearBtn.textContent = origText;
+        clearBtn.style.background = "";
+        clearBtn.style.color = "";
+        // Reset reader state if documents were cleared.
+        if (scope === "documents" || scope === "all") {
+          state.documentId = null;
+          state.filename = null;
+          state.isPdf = false;
+          state.extractedText = "";
+          state.pdfOcr = null;
+          $("#uploadStage").classList.remove("hidden");
+          $("#readerStage").classList.add("hidden");
+          $("#pdfPages").innerHTML = "";
+          $("#textView").textContent = "";
+        }
+      }, 2000);
+    } else {
+      clearBtn.textContent = `✗ ${data.error || "Server error (" + res.status + ")"}`;
+      clearBtn.style.background = "var(--wrong)";
+      clearBtn.style.color = "#fff";
+      setTimeout(() => {
+        clearBtn.disabled = false;
+        clearBtn.textContent = origText;
+        clearBtn.style.background = "";
+        clearBtn.style.color = "";
+      }, 3000);
+    }
+  } catch (err) {
+    clearBtn.textContent = "✗ Network error";
+    clearBtn.style.background = "var(--wrong)";
+    clearBtn.style.color = "#fff";
+    setTimeout(() => {
+      clearBtn.disabled = false;
+      clearBtn.textContent = origText;
+      clearBtn.style.background = "";
+      clearBtn.style.color = "";
+    }, 3000);
+  }
+});
+
 // ---------------------------------------------------------------- debug log
 $("#btnDebugLog").addEventListener("click", () => {
   renderDebugLog();
@@ -1393,104 +1498,108 @@ function renderDebugLog() {
 
 // ---------------------------------------------------------------- dashboard — learning overview
 $("#btnDashboard").addEventListener("click", async () => {
-  const data = await api("/api/dashboard").then((r) => r.json());
-  $("#dashboardBody").innerHTML = renderDashboard(data);
-  openDrawer($("#dashboardDrawer"));
+  try {
+    // Fetch both dashboard data and confidence calibration in parallel.
+    const [dashData, calData] = await Promise.all([
+      api("/api/dashboard").then((r) => r.json()).catch(() => ({})),
+      api("/api/calibration").then((r) => r.json()).catch(() => ({})),
+    ]);
+    openQuizOverlay(); // reuse the full-screen quiz overlay for dashboard
+    $("#quizProgressFill").style.width = "0%";
+    $("#quizProgressLabel").textContent = "";
+    renderFullDashboard(dashData || {}, calData || {});
+  } catch (err) {
+    console.error("Dashboard error:", err);
+    alert(`Failed to load dashboard: ${err.message}`);
+  }
 });
 
-function renderDashboard(data) {
-  const { weakTopics, confidenceMatrix, improvement, reviewSummary } = data;
+function renderFullDashboard(dashData, calData) {
+  const weakTopics = dashData?.weakTopics || [];
+  const improvement = dashData?.improvement || null;
+  const reviewSummary = dashData?.reviewSummary || { dueNow: 0, upcoming: 0 };
 
-  // Weak topic clusters
-  const topicsHtml = weakTopics.length
-    ? weakTopics.map((t) => `
-        <div class="dash-card">
-          <div class="dash-card-header">
-            <span class="dash-badge priority-${t.priority}">${t.label}</span>
-            <span class="dash-count">${t.count} miss${t.count === 1 ? "" : "es"}</span>
+  let html = `<div class="quiz-overlay-inner" style="max-width:800px">`;
+
+  // Confidence section (moved from separate tab into dashboard)
+  if (calData.totalAnswered > 0) {
+    const pct = (n) => (n === null ? "—" : `${Math.round(n * 100)}%`);
+    const confidentWrongRate = calData.confidentWrongRate;
+    html += `
+      <div style="margin-bottom:32px">
+        <h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Confidence Calibration</h3>
+        ${confidentWrongRate !== null ? `
+          <div style="background:var(--paper);border-radius:var(--radius-lg);padding:20px;text-align:center;margin-bottom:16px">
+            <div style="font-family:var(--font-display);font-size:42px;font-weight:500;color:var(--wrong)">${pct(confidentWrongRate)}</div>
+            <div style="font-size:13px;color:var(--ink-soft)">of the time you were <strong>confident</strong>, you were actually wrong</div>
           </div>
-          <div class="dash-samples">
-            ${t.samples.slice(0, 2).map((s) => `<div class="dash-sample">${escapeHtml(s.question.slice(0, 120))}${s.question.length > 120 ? "…" : ""}</div>`).join("")}
-          </div>
+        ` : ""}
+        <div style="display:flex;gap:12px">
+          ${["confident","unsure","guessing"].map((level) => {
+            const b = calData.byConfidence[level];
+            const widthPct = b.accuracy === null ? 0 : Math.round(b.accuracy * 100);
+            return `
+              <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px">
+                <div style="font-size:12px;font-weight:600;text-transform:capitalize;margin-bottom:8px">${level}</div>
+                <div style="height:8px;background:var(--hairline);border-radius:999px;overflow:hidden;margin-bottom:6px">
+                  <div style="height:100%;width:${widthPct}%;background:${level === "confident" ? "var(--accent)" : level === "unsure" ? "var(--amber)" : "var(--ink-soft)"};border-radius:999px"></div>
+                </div>
+                <div style="font-size:11px;color:var(--ink-soft)">${b.total} answered · ${pct(b.accuracy)} correct</div>
+              </div>`;
+          }).join("")}
         </div>
-      `).join("")
-    : `<div class="empty-note">No weaknesses detected yet. Take a quiz to get started.</div>`;
+      </div>
+    `;
+  } else {
+    html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 8px">Confidence Calibration</h3><p style="color:var(--ink-soft);font-size:13px">Take a quiz first — confidence stats fill in after you answer questions.</p></div>`;
+  }
 
-  // Confidence vs accuracy matrix
-  const cm = confidenceMatrix.overall;
-  const confBars = ["confident", "unsure", "guessing"].map((level) => {
-    const b = cm.byConfidence[level];
-    const widthPct = b.accuracy === null ? 0 : Math.round(b.accuracy * 100);
-    return `
-      <div class="calibration-row">
-        <div class="calibration-row-label">
-          <span class="calibration-level">${level}</span>
-          <span class="calibration-count">${b.total} answered</span>
-        </div>
-        <div class="calibration-bar-track">
-          <div class="calibration-bar-fill level-${level}" style="width:${widthPct}%"></div>
-        </div>
-        <div class="calibration-bar-pct">${b.accuracy === null ? "—" : `${Math.round(b.accuracy * 100)}%`}</div>
-      </div>`;
-  }).join("");
+  // Weak topics section
+  html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Weak Topics</h3>`;
+  if (weakTopics.length) {
+    html += weakTopics.map((t) => `
+      <div style="background:var(--paper);border-radius:var(--radius-md);padding:14px;margin-bottom:8px">
+        <div style="font-weight:600;font-size:14px">${escapeHtml(t.topic)}</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${t.missCount} miss${t.missCount !== 1 ? "es" : ""} · last seen ${new Date(t.lastSeen).toLocaleDateString()}</div>
+      </div>`).join("");
+  } else {
+    html += `<p style="color:var(--ink-soft);font-size:13px">No weak topics detected yet.</p>`;
+  }
+  html += `</div>`;
 
-  // Per-category confident-wrong / guessing-right
-  const catRows = (confidenceMatrix.byCategory || []).filter((c) => c.confidentWrong > 0 || c.guessingRight > 0).map((c) => `
-    <div class="dash-cat-row">
-      <span>${escapeHtml(c.label)}</span>
-      ${c.confidentWrong > 0 ? `<span class="dash-cat-miss">${c.confidentWrong} confident miss${c.confidentWrong === 1 ? "" : "es"}</span>` : ""}
-      ${c.guessingRight > 0 ? `<span class="dash-cat-lucky">${c.guessingRight} lucky guess${c.guessingRight === 1 ? "" : "es"}</span>` : ""}
-    </div>
-  `).join("");
+  // Review summary
+  html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Review Queue</h3>`;
+  if (reviewSummary.dueNow > 0 || reviewSummary.upcoming > 0) {
+    html += `<div style="display:flex;gap:12px">
+      <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:500">${reviewSummary.dueNow}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">Due now</div>
+      </div>
+      <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:500">${reviewSummary.upcoming}</div>
+        <div style="font-size:12px;color:var(--ink-soft)">Upcoming</div>
+      </div>
+    </div>`;
+  } else {
+    html += `<p style="color:var(--ink-soft);font-size:13px">Nothing to review right now.</p>`;
+  }
+  html += `</div>`;
 
   // Improvement progress
-  const impHtml = improvement.totalFollowUps > 0
-    ? `
-      <div class="dash-imp-row">
-        <div class="dash-imp-stat"><strong>${improvement.improved}</strong> improved</div>
-        <div class="dash-imp-stat"><strong>${improvement.stillStruggling}</strong> still struggling</div>
-        <div class="dash-imp-rate">${improvement.improvementRate === null ? "—" : `${Math.round(improvement.improvementRate * 100)}%`} improvement rate</div>
-      </div>
-    `
-    : `<div class="empty-note">No follow-up attempts yet. Try "Try a similar question" on wrong answers.</div>`;
+  html += `<div><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Improvement Progress</h3>`;
+  const impList = Array.isArray(improvement) ? improvement : (improvement?.topics || []);
+  if (impList.length) {
+    html += impList.map((i) => `
+      <div style="background:var(--paper);border-radius:var(--radius-md);padding:14px;margin-bottom:8px">
+        <div style="font-weight:600;font-size:14px">${escapeHtml(i.topic || i)}</div>
+        <div style="font-size:12px;color:var(--correct);margin-top:4px">✓ Improved</div>
+      </div>`).join("");
+  } else {
+    html += `<p style="color:var(--ink-soft);font-size:13px">Complete follow-up questions to see improvement tracking.</p>`;
+  }
+  html += `</div></div>`;
 
-  // Review queue summary
-  const rs = reviewSummary;
-  const reviewLinks = [
-    { label: "Doubts", count: rs.byType.doubts },
-    { label: "Confident but wrong", count: rs.byType.confidentWrong },
-    { label: "Conceptual errors", count: rs.byType.conceptualErrors },
-    { label: "Careless errors", count: rs.byType.carelessErrors },
-  ].filter((x) => x.count > 0);
-
-  const reviewLinksHtml = reviewLinks.length
-    ? reviewLinks.map((x) => `<a href="#" class="dash-link" onclick="event.preventDefault();document.getElementById('btnReview').click()">${x.label} (${x.count}) →</a>`).join("")
-    : `<div class="empty-note">Nothing in your review queue.</div>`;
-
-  return `
-    <div class="dashboard-section">
-      <h3>Weak topic clusters</h3>
-      ${topicsHtml}
-    </div>
-
-    <div class="dashboard-section">
-      <h3>Confidence vs accuracy</h3>
-      ${cm.totalAnswered > 0 ? `
-        <div class="calibration-bars">${confBars}</div>
-        ${catRows ? `<div class="dash-cat-rows">${catRows}</div>` : ""}
-      ` : `<div class="empty-note">Take a quiz first.</div>`}
-    </div>
-
-    <div class="dashboard-section">
-      <h3>Improvement progress</h3>
-      ${impHtml}
-    </div>
-
-    <div class="dashboard-section">
-      <h3>Review queue · ${rs.totalDue} due now</h3>
-      ${reviewLinksHtml}
-    </div>
-  `;
+  quizOverlayBody.innerHTML = html;
 }
 
 // ---------------------------------------------------------------- reader tabs
@@ -1508,8 +1617,8 @@ $$(".tools-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     $$(".tools-tab").forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
-    $("#panelTerms").classList.toggle("hidden", tab.dataset.panel !== "terms");
-    $("#panelQuiz").classList.toggle("hidden", tab.dataset.panel !== "quiz");
+    $("#panelTerms")?.classList.toggle("hidden", tab.dataset.panel !== "terms");
+    $("#panelQuiz")?.classList.toggle("hidden", tab.dataset.panel !== "quiz");
   });
 });
 
@@ -1603,10 +1712,15 @@ function openQuizConfigModal() {
 }
 
 async function startQuiz(count, mode) {
-  $("#quizSummaryArea").innerHTML = `<div class="empty-note">Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</div>`;
   quizAnswers.clear();
   currentQuestionIndex = 0;
   currentAttempt = null;
+
+  // Show a temporary loading overlay while generating.
+  openQuizOverlay();
+  $("#quizProgressFill").style.width = "0%";
+  $("#quizProgressLabel").textContent = "";
+  quizOverlayBody.innerHTML = `<div class="empty-note">Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</div>`;
 
   try {
     const res = await api(`/api/documents/${state.documentId}/quiz`, {
@@ -1617,13 +1731,11 @@ async function startQuiz(count, mode) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     currentQuiz = data;
-    $("#quizSummaryArea").innerHTML = "";
-    openQuizOverlay();
     renderQuizQuestion();
   } catch (err) {
     const needsKey = /MANUS_API_KEY/i.test(err.message);
     const hint = needsKey ? `<br><span style="color:var(--ink-soft)">Add your Manus key to <code>.env</code> and restart the server.</span>` : "";
-    $("#quizSummaryArea").innerHTML = `<div class="empty-note">${escapeHtml(err.message)}${hint}</div>`;
+    quizOverlayBody.innerHTML = `<div class="empty-note">${escapeHtml(err.message)}${hint}</div>`;
   }
 }
 
@@ -1827,12 +1939,6 @@ function renderQuizResults() {
 
   $("#quizDoneBtn").addEventListener("click", () => {
     closeQuizOverlay();
-    const scoreDisplay = isFreeText ? `${Math.round(attempt.score * 100)}%` : `${attempt.score} / ${attempt.total}`;
-    $("#quizSummaryArea").innerHTML = `
-      <div class="quiz-summary-card">
-        Last attempt: ${scoreDisplay}. Generate a new quiz to try again.
-      </div>
-    `;
   });
 }
 

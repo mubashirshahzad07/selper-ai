@@ -15,8 +15,8 @@
     </div>
     <div class="topbar-status" id="statusLine">Source-preserving study workspace</div>
     <nav class="topbar-actions">
-      <button class="btn btn-ghost" id="btnDashboard">Learning overview</button>
-      <button class="btn btn-ghost" id="btnCalibration">Confidence check</button>
+      <button class="btn btn-ghost" id="btnDashboard">Dashboard</button>
+      <button class="btn btn-ghost" id="btnGenQuiz">Generate quiz</button>
       <button class="btn btn-ghost" id="btnReview">Review queue</button>
       <button class="btn btn-ghost" id="btnDoubts">Doubt notebook</button>
       <button class="btn btn-ghost" id="btnQuizHistory">Quiz history</button>
@@ -74,17 +74,11 @@
       <aside class="tools-pane">
         <div class="tools-tabs">
           <button class="tools-tab active" data-panel="terms">Key terms</button>
-          <button class="tools-tab" data-panel="quiz">Quiz</button>
         </div>
 
         <div class="tools-panel" id="panelTerms">
           <button class="btn btn-primary btn-block" id="btnKeyTerms">Extract key terms</button>
           <ul class="term-list" id="termList"></ul>
-        </div>
-
-        <div class="tools-panel hidden" id="panelQuiz">
-          <button class="btn btn-primary btn-block" id="btnGenQuiz">Generate 5-question quiz</button>
-          <div id="quizSummaryArea"></div>
         </div>
       </aside>
     </section>
@@ -134,15 +128,6 @@
       <button class="drawer-close" data-close-drawer>&times;</button>
     </div>
     <div class="drawer-body" id="reviewList"></div>
-  </div>
-
-  <!-- Confidence calibration drawer -->
-  <div class="drawer hidden" id="calibrationDrawer">
-    <div class="drawer-header">
-      <h2>Confidence check</h2>
-      <button class="drawer-close" data-close-drawer>&times;</button>
-    </div>
-    <div class="drawer-body" id="calibrationBody"></div>
   </div>
 
   <!-- Dashboard drawer — learning gaps, confidence matrix, improvement progress -->
