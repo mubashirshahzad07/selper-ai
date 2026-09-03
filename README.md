@@ -142,3 +142,6 @@ calibration, and now the full cross-origin plumbing — has been.
    in-memory definition cache (re-looking up the same word is instant), faster Manus task
    polling (1.5s interval), and clearer network-error messages pointing at the backend URL.
 7. **UI polish** — Theme toggle control, smoother color transitions, theme-aware surfaces.
+8. **Dark-mode quiz contrast** — Quiz questions, options, explanations, and results use
+   theme-aware text/background tokens so content stays readable in dark mode (no more
+   light-green/red washes that hide text).
