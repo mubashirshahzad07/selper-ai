@@ -95,7 +95,7 @@ short Wikipedia-searchable article title (e.g. "Return statement" not "return").
 PASSAGE:
 """${surroundingContext.slice(0, 1200)}"""`;
 
-    const { value } = await geminiCompleteWithRetry({ prompt, schema: WORD_SENSE_SCHEMA, timeoutMs: 12000, maxOutputTokens: 256 }, 1);
+    const { value } = await geminiCompleteWithRetry({ prompt, schema: WORD_SENSE_SCHEMA, timeoutMs: 30000, maxOutputTokens: 256 }, 1);
     if (senseCache.size >= SENSE_CACHE_MAX) {
         const oldest = senseCache.keys().next().value;
         senseCache.delete(oldest);

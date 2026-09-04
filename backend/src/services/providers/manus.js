@@ -16,9 +16,8 @@ import fetch from "node-fetch";
 
 const API_BASE = process.env.MANUS_API_BASE || "https://api.manus.ai/v2";
 
-// Valid values per Manus API v2 docs: "manus-1.6", "manus-1.6-lite", "manus-1.6-max".
-// task.create defaults to "manus-1.6" if omitted.
-const DEFAULT_AGENT_PROFILE = process.env.MANUS_AGENT_PROFILE || "manus-1.6-lite";
+// Valid values per Manus API v2 docs: "lite", "standard", "max".
+const DEFAULT_AGENT_PROFILE = process.env.MANUS_AGENT_PROFILE || "lite";
 
 function apiKey() {
   const key = process.env.MANUS_API_KEY;
