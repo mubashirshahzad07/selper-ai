@@ -93,6 +93,12 @@ async function createTask({ prompt, schema = null, agentProfile = null }) {
     message: { content },
     agent_profile: agentProfile || DEFAULT_AGENT_PROFILE,
   };
+  // Manus constraint, discovered the hard way: a structured_output_schema whose
+  // top-level object omits additionalProperties:false is refused with
+  // 400 invalid_argument. It is deliberately NOT normalised here — every schema
+  // sent to this adapter states it in ai.js, so the payload stays exactly what
+  // the call site wrote (the same reason the old toManusSchema() transform was
+  // removed).
   if (schema) body.structured_output_schema = schema;
 
   console.log("[Manus] task.create payload:", JSON.stringify({ ...body, message: { content: [{ type: "text", text: prompt.slice(0, 100) + "..." }] } }, null, 2));
@@ -117,17 +123,44 @@ async function createTask({ prompt, schema = null, agentProfile = null }) {
   return data.task_id;
 }
 
+// Manus propagates a new task asynchronously: task.create hands back a task_id
+// that task.listMessages may not know about for a second or two, answering
+// 404 "task not found" in that window even though the task is healthy and about
+// to run (measured live: 404 at +0ms, 200 at +2s). The first poll used to fire
+// the instant create returned, so a transient read error killed the call — and
+// because the error carried no status, the retry wrapper then burned three more
+// freshly created tasks on the same race. Treat 404 as "not queryable yet"
+// within a bounded grace period instead.
+const TASK_PROPAGATION_GRACE_MS = Number(process.env.MANUS_TASK_GRACE_MS) || 30000;
+
 async function pollTask(taskId, { timeoutMs = 90000, intervalMs = 1500 } = {}) {
-  const deadline = Date.now() + timeoutMs;
+  const startedAt = Date.now();
+  const deadline = startedAt + timeoutMs;
+  const notFoundDeadline = startedAt + Math.min(timeoutMs, TASK_PROPAGATION_GRACE_MS);
 
   while (Date.now() < deadline) {
+    // Pause before every read, including the first, so a task created moments
+    // ago has a chance to become queryable before we ask about it.
+    await new Promise((r) => setTimeout(r, intervalMs));
+
     const res = await fetch(
       `${API_BASE}/task.listMessages?task_id=${encodeURIComponent(taskId)}&order=desc&limit=20`,
       { headers: authHeaders() }
     );
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`Manus task.listMessages failed: ${res.status} ${text}`);
+      const isNotFound = res.status === 404 && /not_found|task not found/i.test(text);
+      if (isNotFound && Date.now() < notFoundDeadline) continue; // still propagating
+
+      const err = new Error(
+        isNotFound
+          ? `Manus task ${taskId} was created but never became readable (404 for ${Math.round(TASK_PROPAGATION_GRACE_MS / 1000)}s).`
+          : `Manus task.listMessages failed: ${res.status} ${text}`
+      );
+      // Carry the status so manusCompleteWithRetry stops retrying client errors
+      // that a fresh task.create can't fix (bad key, permanently missing task).
+      err.status = res.status;
+      throw err;
     }
 
     const data = await res.json();

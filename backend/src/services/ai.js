@@ -1,7 +1,9 @@
 // backend/src/services/ai.js
 // Every function here does ONE narrowly scoped task and returns structured
 // data. The actual provider call is delegated to ./providers/{gemini,manus}.js
-// — this file just owns the prompts, schemas, and per-function validation.
+// — this file owns the response schemas and per-function validation, while all
+// prompt wording lives in ./prompts.js: edit a prompt there and it applies to
+// every call path at once.
 //
 // PROVIDER SPLIT:
 //   Gemini -> extractTextFromImage (OCR), resolveWordSense (Definitions),
@@ -17,7 +19,10 @@
 // quiz generation fits Manus's slower agent-task model but a right-click
 // lookup doesn't. If you'd rather any of those ride on Manus instead, they're
 // a one-line change (swap the `geminiComplete`/`geminiCompleteWithRetry` call
-// for `manusComplete`/`manusCompleteWithRetry`, same schema/prompt).
+// for `manusComplete`/`manusCompleteWithRetry`, same prompt) — with one catch:
+// Manus refuses any structured_output_schema whose top-level object omits
+// `additionalProperties: false`, which Gemini tolerates. Add it to the schema
+// first, or task.create fails with 400 invalid_argument (see GRADE_SCHEMA).
 //
 // Gemini's generateContent is a synchronous completion call — fast (~1-3s),
 // schema-guaranteed JSON via responseSchema, inline base64 for vision.
@@ -28,6 +33,17 @@
 
 import { geminiComplete, geminiCompleteWithRetry } from "./providers/gemini.js";
 import { manusComplete, manusCompleteWithRetry } from "./providers/manus.js";
+import {
+    KEY_TERMS_PROMPT,
+    WORD_SENSE_PROMPT,
+    URDU_TRANSLATION_PROMPT,
+    SUMMARY_PROMPT,
+    MCQ_QUIZ_PROMPT,
+    FREE_TEXT_QUIZ_PROMPT,
+    FOLLOW_UP_PROMPT,
+    OCR_PROMPT,
+    GRADING_PROMPT,
+} from "./prompts.js";
 
 // ---------------------------------------------------------------------------
 // 1. Key-term extraction — Gemini
@@ -51,11 +67,7 @@ const KEY_TERMS_SCHEMA = {
 };
 
 export async function extractKeyTerms(sourceText) {
-    const prompt = `From the following study material, extract the 6-10 most important key terms a student should know.
-Be concise — each "why" explanation should be one short sentence (max 15 words).
-
-MATERIAL:
-"""${sourceText.slice(0, 6000)}"""`;
+    const prompt = KEY_TERMS_PROMPT(sourceText);
 
     const { value } = await geminiCompleteWithRetry({ prompt, schema: KEY_TERMS_SCHEMA, timeoutMs: 18000, maxOutputTokens: 512 }, 1);
     return value.terms ?? [];
@@ -87,13 +99,7 @@ export async function resolveWordSense(word, surroundingContext) {
     const key = senseCacheKey(word, surroundingContext);
     if (senseCache.has(key)) return senseCache.get(key);
 
-    const prompt = `A student right-clicked the word "${word}" while reading the passage below.
-1. Determine the single most likely intended sense of this word IN THIS CONTEXT, phrased as a
-short Wikipedia-searchable article title (e.g. "Return statement" not "return").
-2. Write a concise definition — 1-2 sentences max, no essay.
-
-PASSAGE:
-"""${surroundingContext.slice(0, 1200)}"""`;
+    const prompt = WORD_SENSE_PROMPT(word, surroundingContext);
 
     const { value } = await geminiCompleteWithRetry({ prompt, schema: WORD_SENSE_SCHEMA, timeoutMs: 30000, maxOutputTokens: 256 }, 1);
     if (senseCache.size >= SENSE_CACHE_MAX) {
@@ -114,11 +120,7 @@ const URDU_SCHEMA = {
 };
 
 export async function translateToUrdu(text) {
-    const prompt = `Translate the following text into natural, academically appropriate Urdu.
-Keep the translation concise — match the original length closely.
-
-TEXT:
-"""${text.slice(0, 2500)}"""`;
+    const prompt = URDU_TRANSLATION_PROMPT(text);
 
     const { value } = await geminiCompleteWithRetry({ prompt, schema: URDU_SCHEMA, timeoutMs: 15000, maxOutputTokens: 512 }, 1);
     return value.urdu ?? "";
@@ -134,14 +136,7 @@ const SUMMARY_SCHEMA = {
 };
 
 export async function summarizePassage(passage, surroundingContext) {
-    const prompt = `Summarize the SELECTED passage below in 2-3 clear sentences max.
-Be concise — do not exceed 3 sentences. Ground strictly in the source material.
-
-SURROUNDING CONTEXT:
-"""${surroundingContext.slice(0, 1500)}"""
-
-SELECTED PASSAGE:
-"""${passage.slice(0, 1500)}"""`;
+    const prompt = SUMMARY_PROMPT(passage, surroundingContext);
 
     const { value } = await geminiCompleteWithRetry({ prompt, schema: SUMMARY_SCHEMA, timeoutMs: 12000, maxOutputTokens: 256 }, 1);
     return value.summary ?? "";
@@ -197,11 +192,7 @@ const FREE_TEXT_QUIZ_SCHEMA = {
 
 export async function generateQuiz(sourceText, count = 5, mode = "mcq") {
     if (mode === "freeText") {
-        const prompt = `Create ${count} short-answer quiz questions grounded ONLY in the study material below.
-Be concise — keep model answers to 1-2 sentences and grading criteria to 2-3 brief bullet points.
-
-MATERIAL:
-"""${sourceText.slice(0, 8000)}"""`;
+        const prompt = FREE_TEXT_QUIZ_PROMPT(sourceText, count);
 
         const { value } = await manusCompleteWithRetry({ prompt, schema: FREE_TEXT_QUIZ_SCHEMA, timeoutMs: 90000 });
         return (value.questions ?? [])
@@ -210,12 +201,7 @@ MATERIAL:
     }
 
     // MCQ mode (default)
-    const prompt = `Create a ${count}-question MCQ quiz grounded ONLY in the study material below.
-Each question: exactly 4 options, one correct. Keep explanations to one sentence max.
-Vary difficulty. Tag each with its concept/topic.
-
-MATERIAL:
-"""${sourceText.slice(0, 8000)}"""`;
+    const prompt = MCQ_QUIZ_PROMPT(sourceText, count);
 
     const { value } = await manusCompleteWithRetry({ prompt, schema: MCQ_QUIZ_SCHEMA, timeoutMs: 90000 });
     const questions = value.questions ?? [];
@@ -252,14 +238,7 @@ const FOLLOW_UP_SCHEMA = {
 };
 
 export async function generateFollowUpQuestion(sourceText, originalQuestion) {
-    const prompt = `Student got this wrong: "${originalQuestion.question}"
-(Correct: "${originalQuestion.options[originalQuestion.correctIndex]}")
-
-Write ONE new MCQ retesting the SAME concept with different wording.
-Keep explanation to one sentence max. Exactly 4 options, one correct.
-
-MATERIAL:
-"""${sourceText.slice(0, 6000)}"""`;
+    const prompt = FOLLOW_UP_PROMPT(sourceText, originalQuestion);
 
     const { value: parsed } = await manusCompleteWithRetry({ prompt, schema: FOLLOW_UP_SCHEMA, timeoutMs: 60000 });
 
@@ -317,12 +296,7 @@ const OCR_SCHEMA = {
  * varies — don't remove that fallback when touching this function.
  */
 export async function extractTextFromImage(base64Data, mimeType) {
-    const prompt = `Transcribe every readable word in the attached image with its position.
-Rules:
-- "x" and "y" are the top-left corner of the word's bounding box; "w" and "h" are width and height.
-- All bbox values are normalised 0-1 relative to the image width/height.
-- Include every readable word, in reading order.
-- If nothing is legible, return an empty transcription and an empty words list.`;
+    const prompt = OCR_PROMPT();
 
     const { value } = await geminiComplete({
         prompt,
@@ -354,9 +328,14 @@ function normaliseWords(list) {
 }
 
 // ---------------------------------------------------------------------------
-// 8. Free-text answer grading — Gemini
+// 8. Free-text answer grading — Manus
 // ---------------------------------------------------------------------------
 const GRADE_SCHEMA = {
+    // additionalProperties:false is mandatory here, not a strictness preference:
+    // Manus answers task.create with 400 invalid_argument ("unexpected error from
+    // node server") for any top-level object that omits it, so grading failed on
+    // every question while the quiz schemas — which all set it — worked. Verified
+    // against the live API by posting both shapes.
     type: "object",
     properties: {
         score: { type: "number" },
@@ -365,16 +344,11 @@ const GRADE_SCHEMA = {
         missedCriteria: { type: "array", items: { type: "string" } },
     },
     required: ["score", "feedback", "matchedCriteria", "missedCriteria"],
+    additionalProperties: false,
 };
 
 export async function gradeFreeTextAnswer(studentAnswer, question) {
-    const prompt = `Grade this student's free-text answer. Be concise in feedback (2-3 sentences max).
-Score 0.0-1.0 based on how well the answer matches the criteria.
-
-QUESTION: "${question.question}"
-MODEL ANSWER: "${question.modelAnswer}"
-CRITERIA: ${JSON.stringify(question.gradingCriteria)}
-STUDENT: "${studentAnswer}"`;
+    const prompt = GRADING_PROMPT(studentAnswer, question);
 
     console.log(`[AI] Grading: "${question.question.slice(0, 60)}..."`);
     const t0 = Date.now();

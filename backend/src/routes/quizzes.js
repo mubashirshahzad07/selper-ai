@@ -29,9 +29,9 @@ export function quizzesRouter() {
 
       let answers;
       if (isFreeText) {
-        // Grade each free-text answer via AI (Gemini) — sequentially to respect
-        // Gemini's rate limits. Promise.all would fire all calls at once and
-        // risk overwhelming them.
+        // Grade each free-text answer via Manus — sequentially to respect
+        // Manus's task.create limits (10/min, 2 concurrent). Promise.all would
+        // fire all calls at once and risk overwhelming them.
         answers = [];
         for (const r of responses) {
           const q = quiz.questions[r.questionIndex];
@@ -123,10 +123,17 @@ export function quizzesRouter() {
         return res.status(400).json({ error: "Regrading only applies to free-text quizzes." });
       }
 
-      // Re-grade only answers that had grading errors.
+      // Re-grade only answers that had grading errors. This predicate has to match
+      // whatever the catch below writes, or a first transient failure silently
+      // removes the row from every future retry: "Regrade failed: ..." used to be
+      // written but never matched here, which stranded four answers in one stored
+      // attempt for good. Both spellings are tested so rows already sitting in
+      // db.json stay recoverable. Mirrored in frontend/js/app.js, which uses the
+      // same test to decide whether to show the Regrade button at all.
+      const GRADING_FAILED_RE = /grading failed|regrade failed|timed out/i;
       for (let i = 0; i < attempt.answers.length; i++) {
         const ans = attempt.answers[i];
-        if (ans.feedback?.includes("Grading failed") || ans.feedback?.includes("timed out")) {
+        if (GRADING_FAILED_RE.test(ans.feedback || "")) {
           const q = quiz.questions[i];
           if (!q) continue; // attempt/answer count mismatch — leave this row untouched
           try {
@@ -138,7 +145,9 @@ export function quizzesRouter() {
             ans.isCorrect = gradeResult.score >= 0.7;
             ans.errorCategory = ans.isCorrect ? null : (gradeResult.score >= 0.4 ? "Careless" : "Conceptual");
           } catch (err) {
-            ans.feedback = `Regrade failed: ${err.message}`;
+            // Keep the canonical "Grading failed" prefix: this string is the
+            // retry marker, so it must remain matched by GRADING_FAILED_RE.
+            ans.feedback = `Grading failed on regrade: ${err.message}`;
           }
         }
       }

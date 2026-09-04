@@ -1641,7 +1641,7 @@ function renderSettings(s) {
     return `
 <div style="margin-bottom:20px">
 <h4 style="margin:0 0 8px;font-size:14px">Gemini API Configuration</h4>
-<p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">OCR, definitions, translate, summarize, key terms, and free-text grading.</p>
+<p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">OCR, definitions, translate, summarize, and key terms.</p>
 <div style="font-size:12.5px;line-height:1.8">
 <div><strong>Model:</strong> ${escapeHtml(s.geminiModel)}</div>
 <div><strong>API base:</strong> ${escapeHtml(s.geminiApiBase)}</div>
@@ -1659,7 +1659,7 @@ function renderSettings(s) {
 
 <div style="margin-bottom:20px">
 <h4 style="margin:0 0 8px;font-size:14px">Manus API Configuration</h4>
-<p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Quiz generation. Agent profile, concurrency limit, and API key override.</p>
+<p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">Quiz generation and free-text grading. Agent profile, concurrency limit, and API key override.</p>
 <div style="font-size:12.5px;line-height:1.8">
 <div><strong>Agent profile:</strong> ${escapeHtml(s.manusAgentProfile)}</div>
 <div><strong>Max concurrent tasks:</strong> ${s.manusMaxConcurrentTasks}</div>
@@ -2398,7 +2398,7 @@ function renderQuizResults() {
         }).join("")}
     </div>
     <div class="quiz-overlay-nav" style="justify-content:center;gap:12px">
-        ${attempt.answers.some((a) => a.feedback?.includes("Grading failed") || a.feedback?.includes("timed out")) ? `
+        ${attempt.answers.some((a) => /grading failed|regrade failed|timed out/i.test(a.feedback || "")) ? `
             <button class="btn btn-ghost" id="quizRegradeBtn" style="border-color:var(--amber);color:var(--amber)">🔄 Regrade failed items</button>
         ` : ""}
         <button class="btn btn-primary" id="quizDoneBtn">Done</button>
