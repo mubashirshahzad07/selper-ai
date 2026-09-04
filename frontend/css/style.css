@@ -28,16 +28,32 @@
     --font-body: 'IBM Plex Sans', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
     --font-urdu: 'Noto Nastaliq Urdu', serif;
+    /* Two UI-sans voices, both deliberately outside the Fraunces display face:
+       --font-stat carries the large dashboard figures, --font-headline the landing
+       h1. Kept as tokens so every inline style: attribute can reference them and
+       the whole voice can be switched from here. */
+    --font-stat: Arial, sans-serif;
+    --font-headline: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
     --ease: cubic-bezier(.16,.84,.44,1);
+
+    /* Height of the sticky topbar. app.js republishes the measured value, because
+       the bar wraps to a second row once the nav buttons stop fitting beside the
+       brand — a hardcoded 60px would leave a gap or a stray page scrollbar. */
+    --topbar-h: 60px;
 }
 
 html[data-theme="dark"] {
-    --paper:      #0F1A15;
-    --surface:    #162019;
+    /* Neutral base ramp — the page sits on #121212 with a single elevation step
+       for panels and a matching neutral divider, so green reads as an accent
+       rather than tinting every surface. color-scheme lets the native scrollbars
+       and form controls go dark to match instead of floating light grey on top. */
+    color-scheme: dark;
+    --paper:      #121212;
+    --surface:    #1B1B1B;
     --ink:        #E8F0EA;
     --ink-soft:   #8FA89B;
-    --hairline:   #2A3D33;
+    --hairline:   #2C2C2C;
     --accent:     #4CAF7D;
     --accent-ink: #1A2E24;
     --mint:       #6FD99E;
@@ -72,15 +88,18 @@ button { font-family: inherit; cursor: pointer; }
 .topbar {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 14px 28px;
+    gap: 20px;
+    padding: 14px 24px;
     border-bottom: 1px solid var(--hairline);
     background: var(--surface);
     position: sticky;
     top: 0;
     z-index: 40;
+    /* Wrap onto a second row rather than pushing the page into a horizontal
+       scrollbar once the buttons no longer fit beside the brand. */
+    flex-wrap: wrap;
 }
-.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.brand { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0; }
 .brand-mark {
     width: 30px; height: 30px;
     border-radius: 8px;
@@ -92,14 +111,37 @@ button { font-family: inherit; cursor: pointer; }
     display: flex; align-items: center; justify-content: center;
     letter-spacing: 0.02em;
 }
-.brand-name { font-family: var(--font-display); font-size: 19px; font-weight: 500; }
+.brand-name { font-family: var(--font-display); font-size: 19px; font-weight: 500; white-space: nowrap; }
 .topbar-status {
     font-size: 12.5px;
     color: var(--ink-soft);
     font-family: var(--font-mono);
     flex: 1;
+    /* The status line carries the document name, which is long enough to push the
+       whole action row onto a second line. Let it ellipsize instead, so the bar
+       stays a single row like the reader screenshots. */
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.topbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+/* Below this width the six nav buttons can't share a row with the brand, so the
+   status line gives up its space first and the gaps tighten. */
+@media (max-width: 1080px) {
+    .topbar { gap: 14px; padding: 12px 18px; }
+    .topbar-status { display: none; }
+}
+@media (max-width: 720px) {
+    .topbar-actions { gap: 6px; }
+    .topbar .btn { padding: 7px 11px; }
+}
 .theme-toggle {
     border: 1px solid var(--hairline);
     background: var(--paper);
@@ -149,15 +191,44 @@ button { font-family: inherit; cursor: pointer; }
 .btn-primary:hover { background: #246b4d; }
 .btn-block { width: 100%; }
 
+/* Dark mode: button labels read as pure white. Every fill a button can sit on in
+   this theme is dark (--surface, --paper, --mint-soft), so white text can never
+   land on white. Light mode keeps the ink-coloured labels untouched. Buttons that
+   carry a semantic warning colour (clear-data, regrade) set their own inline
+   colour and deliberately stay red / amber. */
+html[data-theme="dark"] .btn,
+html[data-theme="dark"] .btn-ghost,
+html[data-theme="dark"] .btn-primary-action,
+html[data-theme="dark"] .btn-secondary-action {
+    color: #FFFFFF;
+}
+/* The secondary actions were dimmed to sit back from Dashboard/Review; with white
+   text that fade just reads as washed out, so restore full opacity. */
+html[data-theme="dark"] .btn-secondary-action { opacity: 1; }
+html[data-theme="dark"] .btn-primary-action:hover,
+html[data-theme="dark"] .btn-secondary-action:hover { color: #FFFFFF; }
+html[data-theme="dark"] .theme-toggle { color: #FFFFFF; }
+
 /* ---------------------------------------------------------------- upload */
-.workspace { min-height: calc(100vh - 60px); }
+.workspace { min-height: calc(100vh - var(--topbar-h)); }
 
 .upload-stage {
     display: flex; align-items: center; justify-content: center;
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - var(--topbar-h));
     padding: 40px 24px;
 }
-.upload-hero { max-width: 640px; text-align: center; }
+/* Same panel language as the reader: a flat --surface card sitting on the --paper
+   page behind it, divided by a hairline. Putting the hero inside one bordered
+   panel makes the landing screen and the workspace read as a single UI. */
+.upload-hero {
+    max-width: 680px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 38px 44px 42px;
+    box-shadow: 0 24px 60px -40px var(--shadow);
+}
 .eyebrow {
     font-family: var(--font-mono);
     font-size: 12px;
@@ -167,11 +238,13 @@ button { font-family: inherit; cursor: pointer; }
     margin: 0 0 14px;
 }
 .upload-hero h1 {
-    font-family: var(--font-display);
-    font-size: 42px;
-    line-height: 1.2;
-    font-weight: 500;
-    margin: 0 0 18px;
+    /* Heavy UI-sans rather than the Fraunces serif — at this size the statement
+       line wants weight and a neutral skeleton, not display-face contrast. */
+    font-family: var(--font-headline);
+    font-size: 36px;
+    line-height: 1.18;
+    font-weight: 700;
+    margin: 0 0 16px;
     padding-bottom: 4px;
     background: linear-gradient(135deg, var(--accent) 0%, var(--mint) 100%);
     -webkit-background-clip: text;
@@ -180,9 +253,9 @@ button { font-family: inherit; cursor: pointer; }
 }
 .hero-sub {
     color: var(--ink-soft);
-    font-size: 16px;
-    line-height: 1.55;
-    margin: 0 0 36px;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 28px;
     max-width: 560px;
     margin-left: auto;
     margin-right: auto;
@@ -192,8 +265,8 @@ button { font-family: inherit; cursor: pointer; }
     display: flex; flex-direction: column; align-items: center; gap: 10px;
     border: 1.5px dashed var(--hairline);
     border-radius: var(--radius-lg);
-    padding: 48px 24px;
-    background: linear-gradient(to bottom, var(--surface), var(--paper));
+    padding: 36px 24px;
+    background: var(--paper);
     cursor: pointer;
     transition: border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
 }
@@ -215,7 +288,7 @@ button { font-family: inherit; cursor: pointer; }
     instead of the whole document growing taller than the viewport as PDF
     pages stack up — that was breaking the popup's scroll-tracking, since
     it listens on #pdfScroll, not the window. */
-height: calc(100vh - 60px);
+height: calc(100vh - var(--topbar-h));
 overflow: hidden;
 }
 .reader-pane {
@@ -230,20 +303,27 @@ min-width: 0;
 .reader-toolbar {
     display: flex; align-items: center; justify-content: space-between;
     gap: 16px;
+    /* Title + tabs + page counter + zoom need ~730px between them. The reader pane
+       is narrower than that whenever the sidebar is showing on a smallish screen,
+       so let the controls drop to a second row instead of pushing the zoom group
+       out of view. */
+    flex-wrap: wrap;
+    row-gap: 10px;
     padding: 14px 24px;
     border-bottom: 1px solid var(--hairline);
-    background: linear-gradient(to right, var(--surface), var(--mint-soft));
+    /* Flat toolbar rather than a green wash — the tint is carried by the active
+       tab and the page counter, which is how the reader looks in practice. */
+    background: var(--surface);
 }
 .doc-title { font-weight: 600; font-size: 14px; flex-shrink: 0; color: var(--accent); }
 .page-progress {
     display: flex; align-items: center; gap: 6px;
     font-family: var(--font-mono); font-size: 13px;
-    background: linear-gradient(135deg, var(--success-soft), var(--mint-soft));
+    background: var(--paper);
     padding: 6px 14px;
     border-radius: 999px; 
     margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(76, 175, 125, 0.15);
-    border: 1px solid var(--mint-soft);
+    border: 1px solid var(--hairline);
 }
 .page-current { font-weight: 700; color: var(--accent); font-size: 14px; }
 .page-separator { color: var(--ink-soft); font-weight: 500; }
@@ -406,12 +486,12 @@ original word stays legible underneath it. */
 
 /* ---------------------------------------------------------------- tools */
 .tools-pane { 
-    background: linear-gradient(to bottom, var(--surface), var(--paper)); 
+    background: var(--paper); 
     display: flex; 
     flex-direction: column; 
     min-height: 0; 
     overflow-y: auto;
-    border-left: 1px solid var(--mint-soft);
+    border-left: 1px solid var(--hairline);
 }
 .tools-tabs { display: flex; border-bottom: 1px solid var(--hairline); }
 .tools-tab {
@@ -423,7 +503,6 @@ original word stays legible underneath it. */
 .tools-tab.active { 
     color: var(--accent); 
     border-bottom-color: var(--success);
-    background: var(--success-soft);
     font-weight: 600;
 }
 .tools-panel { padding: 18px; overflow-y: auto; flex: 1; }
@@ -486,7 +565,9 @@ original word stays legible underneath it. */
 /* ---------------------------------------------------------------- distraction-free quiz overlay */
 .quiz-overlay {
     position: fixed; inset: 0; z-index: 150;
-    background: linear-gradient(to bottom, var(--paper), var(--mint-soft));
+    /* Flat base rather than a fade into --mint-soft: the dark page is neutral
+       #121212 now, so a green wash across the full screen no longer matches it. */
+    background: var(--paper);
     display: flex; flex-direction: column;
     animation: fadeIn .2s var(--ease);
 }
@@ -494,7 +575,7 @@ original word stays legible underneath it. */
     display: flex; align-items: center; gap: 18px;
     padding: 18px 28px;
     border-bottom: 1px solid var(--hairline);
-    background: linear-gradient(to right, var(--surface), var(--success-soft));
+    background: var(--surface);
 }
 .quiz-overlay-title { 
     font-family: var(--font-display); 
@@ -883,7 +964,7 @@ original word stays legible underneath it. */
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 22px; 
     border-bottom: 1px solid var(--hairline);
-    background: linear-gradient(to right, var(--surface), var(--mint-soft));
+    background: var(--surface);
 }
 .drawer-header h2 { 
     font-family: var(--font-display); 
@@ -943,7 +1024,7 @@ original word stays legible underneath it. */
 .calibration-headline {
     text-align: center;
     padding: 24px 16px;
-    background: linear-gradient(to bottom, var(--paper), var(--mint-soft));
+    background: var(--surface);
     border-radius: var(--radius-lg);
     margin-bottom: 24px;
     border: 1px solid var(--mint-soft);

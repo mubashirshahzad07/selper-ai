@@ -13,7 +13,7 @@
     "guest_vdg3GDGpUyvN": {
       "id": "guest_vdg3GDGpUyvN",
       "createdAt": "2026-09-01T09:37:43.402Z",
-      "lastSeenAt": "2026-09-04T15:18:09.608Z"
+      "lastSeenAt": "2026-09-04T17:04:37.440Z"
     },
     "guest__bAIP3BFjbL9": {
       "id": "guest__bAIP3BFjbL9",
@@ -3919,6 +3919,536 @@
       "isPdf": true,
       "isImage": false,
       "uploadedAt": "2026-09-04T15:17:47.715Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-1\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n2\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n3\n\nOrganizational \nChart\nCHIEF EXECUTIVE OF PAKISTAN\nPresident, Board of Investment\nMINISTER IN CHARGE\nMinister for Commerce, Ind & Prod.\nCHAIRMAN\nBoard of Investment\nSECRETARY\nBoard of Investment\nHEAD OFFICE\nISLAMABAD\nBRANCH OFFICE\nKARACHI\n4\n\nTREES\nA tree is a non-linear abstract data type with a hierarchy-based structure. \nIt consists of nodes (where the data is stored) that are connected via links. \nThe tree data structure stems from a single node called a root node and has \nsubtrees connected to the root.\n6\n\nTREES\nA tree data structure stores information in \nnodes\nSimilar to linked lists:\nThere is a first node, or root\nEach node has variable number of references to \nsuccessors\nEach node, other than the root, has exactly one \nnode pointing to it\n7\n\nTREE TERMINOLOGIES\nRoot\nIt is the mother node of a tree structure and does not have parent. It is the first node \nin hierarchical  arrangement.\nNode\nThe node of a tree stores the data, and its role is the same as in the linked list. Nodes \nare connected by the means of links with other nodes.\nParent\nIt is the immediate  predecessor of a node. \nIn the figure: A is the parent of B and C.\nA\nBC\n8\n\nTREE TERMINOLOGIES\nChild\nAll successor nodes are called child nodes. In the figure: B and C are the child nodes of A.\nLink / Edge\nAn edge connects the two nodes. The line drawn from one node to another node is called \nedge / link. Link is a pointer to node in a tree structure.\nLeaf / Terminal Node\nLeaf node is located at the end of the tree. It does not have any child node. \nA\nBC\n9\n\nTREE TERMINOLOGIES\nFollowing are the important terms with respect to tree.\nPath − Path refers to the sequence of nodes along the edges of a tree.\nRoot − The node at the top of the tree is called root. There is only one root per tree and one path from the \nroot node to any node.\nParent − Any node except the root node has one edge upward to a node called parent.\nChild − The node below a given node connected by its edge downward is called its child node.\nLeaf − The node which does not have any child node is called the leaf node.\nSubtree − Subtree represents the descendants of a node.\nVisiting − Visiting refers to checking the value of a node when control is on the node.\nTraversing − Traversing means passing through nodes in a specific order.\nLevels − Level of a node represents the generation of a node. If the root node is at level 0, then its next child \nnode is at level 1, its grandchild is at level 2, and so on.\nKeys − Key represents a value of a node based on which a search operation is to be carried out for a node.\n10\n\nTREE TERMINOLOGIES\nLevel / Depth\nThe whole tree structured  is leveled. \nThe level of the root node is always at 0\nThe immediate children of root are at level 1 and their children are at level 2 and so no. \nThe length of the path from root to a node is the depth of the node.\nHeight\nThe highest number of nodes that is possible in a way starting from the first node (Root) to a leaf node is called the \nheight of tree. \nThe formula for finding the height of a tree h = i\nmax\n + 1, where h is the height and i\nmax\n is the max level of the tree.\nRoot node\nLeaf nodes\nInterior nodesHeight=3\n11\n0\n1\n2\nLevel / Depth\n\nTREE TERMINOLOGIES\nSibling\nThe child node of same parent are called sibling. \nDegree of a Node\nThe maximum number of children that exists for a node is called as degree of a node.\nPath length\nIs the number of successive edges from source node to destination node.\n12\n\nTREE TERMINOLOGIES\nAncestor and Descendents\nIf a path exists from node a to node b\na is an ancestor of b\nb is a descendent of a\nThe root node is an ancestor of all nodes\nThedescendantsof\nnodeBare;\nC,D,E,F,andG\nThe ancestors of \nnode I are:\nH and A\n13\n\nTREE TERMINOLOGIES\nAnother approach to a tree is to define the tree recursively\nA node with degree n is a tree if it has n children\nAll its children are disjoint trees (i.e., with no intersecting nodes)\nGiven any node a within a tree with root r, the collection of a \nand  all of its descendants is said to be a subtree of the tree with  \nroot a\n14\n\n15\n\nTREE PROPERTIES\nA\nC\nD\nB\nE\nG\nF\nIH\nProperty\nNumber ofnodes\nHeight\nRoot Node\nDepth of G\nLeaves  \nAncestorsofH\nDescendants ofB  \nSiblingsofE\nLeftsubtree\n17\nValue\n9\n5\nA\n3\nC D F H I\nA B E G\nD E F G H I\nD F\n\nTYPES OF  TREES\nThere are three types of trees −\nGeneral Trees\nBinary Trees\nBinary Search Trees\n18\n\n1. GENERAL TREES\nGeneral trees are unordered tree data structures where the root node has minimum \n0 or maximum n subtrees.\nThe General trees have no constraint placed on their hierarchy. The root node thus \nacts like the superset of all the other subtrees.\n19\n\n2. BINARY TREES\nBinary Trees are general trees in which the root node can only hold up to maximum \n2 subtrees: left subtree and right subtree. \nBased on the number of children, binary trees are divided into three types.\n20\n\n2. BINARY TREES\nFull Binary Tree: A full binary tree is a binary tree type where every node has \neither 0 or 2 child nodes.\nComplete Binary Tree: A complete binary tree is a binary tree type where all the \nleaf nodes must be on the same level. However, root and internal nodes in a \ncomplete binary tree can either have 0, 1 or 2 child nodes.\nPerfect Binary Tree: A perfect binary tree is a binary tree type where all the leaf \nnodes are on the same level and every node except leaf nodes have 2 children.\n21\n\n2. BINARY TREES\n22\n\n3. BINARY SEARCH TREES\nBinary Search Trees possess all the properties of Binary Trees including some extra \nproperties of their own, based on some constraints, making them more efficient than \nbinary trees.\nThe data in the Binary Search Trees (BST) is always stored in such a way that the \nvalues in the left subtree are always less than the values in the root node and the \nvalues in the right subtree are always greater than the values in the root node, i.e. left \nsubtree < root node right subtree.\n23\n\n3. BINARY SEARCH TREES\n24\n\n3. BINARY SEARCH TREES\nAdvantages of BST\nBinary Search Trees are more efficient than Binary Trees since time complexity for \nperforming various operations reduces.\nSince the order of keys is based on just the parent node, searching operation \nbecomes simpler.\nThe alignment of BST also favors Range Queries, which are executed to find values \nexisting between two keys. This helps in the Database Management System.\n25\n\n3. BINARY SEARCH TREES\nDisadvantages of BST\nThe main disadvantage of Binary Search Trees is that if all elements in nodes are \neither greater than or lesser than the root node, the tree becomes skewed. Simply \nput, the tree becomes slanted to one side completely.\nThis skewness will make the tree a linked list rather than a BST, since the worst case \ntime complexity for searching operation becomes O(n).\nTo overcome this issue of skewness in the Binary Search Trees, the concept of \nBalanced Binary Search Trees was introduced.\n26\n\nBALANCED BINARY SEARCH TREES\nThe trees are designed in a way that they self-balance once the height difference exceeds one. \nBinary Search Trees use rotations as self-balancing algorithms. There are four different types of rotations: Left Left, \nRight Right, Left Right, Right Left.\nThere are various types of self-balancing binary search trees −\nAVL Trees\nRed Black Trees\nB Trees\nB+ Trees\nSplay Trees\nPriority Search Trees\n27\n\nBINARY TREES\nThe simplest form of tree is a binary tree. \nA binary tree consists of \na node (called the root node) and \n the two sub-trees are referred as\nLeft-hand subtree\nRight-hand subtree\nA tree is binary if each node of it has a maximum of two branches i.e. a \nnode of a binary tree can have maximum two children.\n28\n\nBINARY TREE\n57\n2\n5114\n269\n29\n\nNOTATION\nA\nC\nGHI\nFE\nB\nD\nRoot\nLeft sub-tree\nRight sub-tree\n30\n\nAn edge connects the two nodes.\nA\nC\nGHI\nFE\nB\nD\n31\n\nChildren\nWho are node C’s children?\nWho are node A’s children?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n32\n\nDescendants\nWho are node C’s descendants?\nWho are node A’s descendants?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n33\n\nParents\nWho is node E’s parent?\nWho is node H’s parent?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n34\n\nAncestors\nWho are node D’s ancestors?\nWho are node H’s ancestors?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n35\n\nPath\nIf n\n1\n, n\n2\n,...n\nk\n is a sequence of nodes\nsuch that n\ni\n is the parent of n\ni\n+1, \nthen that sequence is a path.\nThe length of the path is k-1.\nPath from J to A\nNOTATION\nGI\nE\nB\nD\nA\nC\nH\nF\nJ\n36\n\nDepth\nThe length of the path from \nthe root of the tree to the node\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n1\n2\n37\n\nLevel\nAll nodes of depth d are at \nlevel d in the tree.\nNOTATION\n0\n1\n2\n3\nA\nC\nGHI\nFE\nB\nD\n38\n\nLeaf node\nAny node that has two empty \nchildren.\nNOTATION\nA\nCB\nFED\nGHI\n39\n\nInternal node\nAny node that has at least one non-\nempty child.\nNOTATION\nA\nCB\nFED\nGHI\n40\n\nBINARY TREE: FULL NODE\nA full node is a node where both the left and right sub-trees are non-empty trees\nfullnodesneitherleafnodes\n41\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n42\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n43\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh  \n= 2\n4 \n=16\n \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1= 2\n4+1\n  - 1=  32 - 1= 31  nodes\nh\n44\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n45",
+      "ocrData": {
+        "4": {
+          "text": "               ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 7.6125,
+                "y": 29.338055555555552,
+                "w": 0.18984375,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 103.29375,
+                "y": 1276.5570833333331,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 5671.308749999999,
+                "y": 89997.42048611109,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 311355.37537499995,
+                "y": 6344818.290381944,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 105642879.22036248,
+                "y": 477764817.9818715,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 35084000189.44176,
+                "y": 34542396340.8032,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 11146186860186.012,
+                "y": 2393788066418.222,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3507705004900538.5,
+                "y": 161580694483230.56,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 685054787457075200,
+                "y": 11197542127687878,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 132147068500469810000,
+                "y": 755834093618931700,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 10,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 2.5808322478141753e+22,
+                "y": 52379302687791964000,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 11,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 4.978425406033544e+24,
+                "y": 3.5356029314259574e+21,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 12,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 9.005971559514682e+26,
+                "y": 2.450172831478188e+23,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 13,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1.3698082742021829e+29,
+                "y": 1.653866661247777e+25,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 14,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 2.4779831680317487e+31,
+                "y": 1.1461295962447094e+27,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 15,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 4.438067853944862e+33,
+                "y": 7.736374774651788e+28,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "6": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.6394062500000001,
+                "y": 0.19266666666666668,
+                "w": 0.33305208333333336,
+                "h": 0.4562777777777777
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": " ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.5572916666666666,
+                "y": 0.44,
+                "w": 0.21172916666666666,
+                "h": 0.2797777777777778
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 113.83239583333332,
+                "y": 66.50380000000001,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.6799270833333334,
+                "y": 0.04872037037037037,
+                "w": 0.28363541666666664,
+                "h": 0.3862777777777778
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 43,
+      "ocrApplied": true,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "07VyHZkFcZ": {
+      "id": "07VyHZkFcZ",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "11- Trees-1.pdf",
+      "storedPath": "/uploads/a4d6eb981592a295e35e076d1886012d",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-04T16:02:18.657Z",
+      "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-1\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n2\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n3\n\nOrganizational \nChart\nCHIEF EXECUTIVE OF PAKISTAN\nPresident, Board of Investment\nMINISTER IN CHARGE\nMinister for Commerce, Ind & Prod.\nCHAIRMAN\nBoard of Investment\nSECRETARY\nBoard of Investment\nHEAD OFFICE\nISLAMABAD\nBRANCH OFFICE\nKARACHI\n4\n\nTREES\nA tree is a non-linear abstract data type with a hierarchy-based structure. \nIt consists of nodes (where the data is stored) that are connected via links. \nThe tree data structure stems from a single node called a root node and has \nsubtrees connected to the root.\n6\n\nTREES\nA tree data structure stores information in \nnodes\nSimilar to linked lists:\nThere is a first node, or root\nEach node has variable number of references to \nsuccessors\nEach node, other than the root, has exactly one \nnode pointing to it\n7\n\nTREE TERMINOLOGIES\nRoot\nIt is the mother node of a tree structure and does not have parent. It is the first node \nin hierarchical  arrangement.\nNode\nThe node of a tree stores the data, and its role is the same as in the linked list. Nodes \nare connected by the means of links with other nodes.\nParent\nIt is the immediate  predecessor of a node. \nIn the figure: A is the parent of B and C.\nA\nBC\n8\n\nTREE TERMINOLOGIES\nChild\nAll successor nodes are called child nodes. In the figure: B and C are the child nodes of A.\nLink / Edge\nAn edge connects the two nodes. The line drawn from one node to another node is called \nedge / link. Link is a pointer to node in a tree structure.\nLeaf / Terminal Node\nLeaf node is located at the end of the tree. It does not have any child node. \nA\nBC\n9\n\nTREE TERMINOLOGIES\nFollowing are the important terms with respect to tree.\nPath − Path refers to the sequence of nodes along the edges of a tree.\nRoot − The node at the top of the tree is called root. There is only one root per tree and one path from the \nroot node to any node.\nParent − Any node except the root node has one edge upward to a node called parent.\nChild − The node below a given node connected by its edge downward is called its child node.\nLeaf − The node which does not have any child node is called the leaf node.\nSubtree − Subtree represents the descendants of a node.\nVisiting − Visiting refers to checking the value of a node when control is on the node.\nTraversing − Traversing means passing through nodes in a specific order.\nLevels − Level of a node represents the generation of a node. If the root node is at level 0, then its next child \nnode is at level 1, its grandchild is at level 2, and so on.\nKeys − Key represents a value of a node based on which a search operation is to be carried out for a node.\n10\n\nTREE TERMINOLOGIES\nLevel / Depth\nThe whole tree structured  is leveled. \nThe level of the root node is always at 0\nThe immediate children of root are at level 1 and their children are at level 2 and so no. \nThe length of the path from root to a node is the depth of the node.\nHeight\nThe highest number of nodes that is possible in a way starting from the first node (Root) to a leaf node is called the \nheight of tree. \nThe formula for finding the height of a tree h = i\nmax\n + 1, where h is the height and i\nmax\n is the max level of the tree.\nRoot node\nLeaf nodes\nInterior nodesHeight=3\n11\n0\n1\n2\nLevel / Depth\n\nTREE TERMINOLOGIES\nSibling\nThe child node of same parent are called sibling. \nDegree of a Node\nThe maximum number of children that exists for a node is called as degree of a node.\nPath length\nIs the number of successive edges from source node to destination node.\n12\n\nTREE TERMINOLOGIES\nAncestor and Descendents\nIf a path exists from node a to node b\na is an ancestor of b\nb is a descendent of a\nThe root node is an ancestor of all nodes\nThedescendantsof\nnodeBare;\nC,D,E,F,andG\nThe ancestors of \nnode I are:\nH and A\n13\n\nTREE TERMINOLOGIES\nAnother approach to a tree is to define the tree recursively\nA node with degree n is a tree if it has n children\nAll its children are disjoint trees (i.e., with no intersecting nodes)\nGiven any node a within a tree with root r, the collection of a \nand  all of its descendants is said to be a subtree of the tree with  \nroot a\n14\n\n15\n\nTREE PROPERTIES\nA\nC\nD\nB\nE\nG\nF\nIH\nProperty\nNumber ofnodes\nHeight\nRoot Node\nDepth of G\nLeaves  \nAncestorsofH\nDescendants ofB  \nSiblingsofE\nLeftsubtree\n17\nValue\n9\n5\nA\n3\nC D F H I\nA B E G\nD E F G H I\nD F\n\nTYPES OF  TREES\nThere are three types of trees −\nGeneral Trees\nBinary Trees\nBinary Search Trees\n18\n\n1. GENERAL TREES\nGeneral trees are unordered tree data structures where the root node has minimum \n0 or maximum n subtrees.\nThe General trees have no constraint placed on their hierarchy. The root node thus \nacts like the superset of all the other subtrees.\n19\n\n2. BINARY TREES\nBinary Trees are general trees in which the root node can only hold up to maximum \n2 subtrees: left subtree and right subtree. \nBased on the number of children, binary trees are divided into three types.\n20\n\n2. BINARY TREES\nFull Binary Tree: A full binary tree is a binary tree type where every node has \neither 0 or 2 child nodes.\nComplete Binary Tree: A complete binary tree is a binary tree type where all the \nleaf nodes must be on the same level. However, root and internal nodes in a \ncomplete binary tree can either have 0, 1 or 2 child nodes.\nPerfect Binary Tree: A perfect binary tree is a binary tree type where all the leaf \nnodes are on the same level and every node except leaf nodes have 2 children.\n21\n\n2. BINARY TREES\n22\n\n3. BINARY SEARCH TREES\nBinary Search Trees possess all the properties of Binary Trees including some extra \nproperties of their own, based on some constraints, making them more efficient than \nbinary trees.\nThe data in the Binary Search Trees (BST) is always stored in such a way that the \nvalues in the left subtree are always less than the values in the root node and the \nvalues in the right subtree are always greater than the values in the root node, i.e. left \nsubtree < root node right subtree.\n23\n\n3. BINARY SEARCH TREES\n24\n\n3. BINARY SEARCH TREES\nAdvantages of BST\nBinary Search Trees are more efficient than Binary Trees since time complexity for \nperforming various operations reduces.\nSince the order of keys is based on just the parent node, searching operation \nbecomes simpler.\nThe alignment of BST also favors Range Queries, which are executed to find values \nexisting between two keys. This helps in the Database Management System.\n25\n\n3. BINARY SEARCH TREES\nDisadvantages of BST\nThe main disadvantage of Binary Search Trees is that if all elements in nodes are \neither greater than or lesser than the root node, the tree becomes skewed. Simply \nput, the tree becomes slanted to one side completely.\nThis skewness will make the tree a linked list rather than a BST, since the worst case \ntime complexity for searching operation becomes O(n).\nTo overcome this issue of skewness in the Binary Search Trees, the concept of \nBalanced Binary Search Trees was introduced.\n26\n\nBALANCED BINARY SEARCH TREES\nThe trees are designed in a way that they self-balance once the height difference exceeds one. \nBinary Search Trees use rotations as self-balancing algorithms. There are four different types of rotations: Left Left, \nRight Right, Left Right, Right Left.\nThere are various types of self-balancing binary search trees −\nAVL Trees\nRed Black Trees\nB Trees\nB+ Trees\nSplay Trees\nPriority Search Trees\n27\n\nBINARY TREES\nThe simplest form of tree is a binary tree. \nA binary tree consists of \na node (called the root node) and \n the two sub-trees are referred as\nLeft-hand subtree\nRight-hand subtree\nA tree is binary if each node of it has a maximum of two branches i.e. a \nnode of a binary tree can have maximum two children.\n28\n\nBINARY TREE\n57\n2\n5114\n269\n29\n\nNOTATION\nA\nC\nGHI\nFE\nB\nD\nRoot\nLeft sub-tree\nRight sub-tree\n30\n\nAn edge connects the two nodes.\nA\nC\nGHI\nFE\nB\nD\n31\n\nChildren\nWho are node C’s children?\nWho are node A’s children?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n32\n\nDescendants\nWho are node C’s descendants?\nWho are node A’s descendants?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n33\n\nParents\nWho is node E’s parent?\nWho is node H’s parent?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n34\n\nAncestors\nWho are node D’s ancestors?\nWho are node H’s ancestors?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n35\n\nPath\nIf n\n1\n, n\n2\n,...n\nk\n is a sequence of nodes\nsuch that n\ni\n is the parent of n\ni\n+1, \nthen that sequence is a path.\nThe length of the path is k-1.\nPath from J to A\nNOTATION\nGI\nE\nB\nD\nA\nC\nH\nF\nJ\n36\n\nDepth\nThe length of the path from \nthe root of the tree to the node\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n1\n2\n37\n\nLevel\nAll nodes of depth d are at \nlevel d in the tree.\nNOTATION\n0\n1\n2\n3\nA\nC\nGHI\nFE\nB\nD\n38\n\nLeaf node\nAny node that has two empty \nchildren.\nNOTATION\nA\nCB\nFED\nGHI\n39\n\nInternal node\nAny node that has at least one non-\nempty child.\nNOTATION\nA\nCB\nFED\nGHI\n40\n\nBINARY TREE: FULL NODE\nA full node is a node where both the left and right sub-trees are non-empty trees\nfullnodesneitherleafnodes\n41\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n42\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n43\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh  \n= 2\n4 \n=16\n \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1= 2\n4+1\n  - 1=  32 - 1= 31  nodes\nh\n44\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n45",
+      "ocrData": {
+        "4": {
+          "text": "               ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 7.6125,
+                "y": 29.338055555555552,
+                "w": 0.18984375,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 103.29375,
+                "y": 1276.5570833333331,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 2,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 5671.308749999999,
+                "y": 89997.42048611109,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 3,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 311355.37537499995,
+                "y": 6344818.290381944,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 4,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 105642879.22036248,
+                "y": 477764817.9818715,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 5,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 35084000189.44176,
+                "y": 34542396340.8032,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 6,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 11146186860186.012,
+                "y": 2393788066418.222,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 7,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 3507705004900538.5,
+                "y": 161580694483230.56,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 8,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 685054787457075200,
+                "y": 11197542127687878,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 9,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 132147068500469810000,
+                "y": 755834093618931700,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 10,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 2.5808322478141753e+22,
+                "y": 52379302687791964000,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 11,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 4.978425406033544e+24,
+                "y": 3.5356029314259574e+21,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 12,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 9.005971559514682e+26,
+                "y": 2.450172831478188e+23,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 13,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 1.3698082742021829e+29,
+                "y": 1.653866661247777e+25,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 14,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 2.4779831680317487e+31,
+                "y": 1.1461295962447094e+27,
+                "w": 1,
+                "h": 1
+              }
+            },
+            {
+              "imageIndex": 15,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 4.438067853944862e+33,
+                "y": 7.736374774651788e+28,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "6": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.6394062500000001,
+                "y": 0.19266666666666668,
+                "w": 0.33305208333333336,
+                "h": 0.4562777777777777
+              }
+            }
+          ]
+        },
+        "12": {
+          "text": " ",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.5572916666666666,
+                "y": 0.44,
+                "w": 0.21172916666666666,
+                "h": 0.2797777777777778
+              }
+            },
+            {
+              "imageIndex": 1,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 113.83239583333332,
+                "y": 66.50380000000001,
+                "w": 1,
+                "h": 1
+              }
+            }
+          ]
+        },
+        "13": {
+          "text": "",
+          "words": [],
+          "hasNativeText": true,
+          "images": [
+            {
+              "imageIndex": 0,
+              "text": "",
+              "words": [],
+              "rect": {
+                "x": 0.6799270833333334,
+                "y": 0.04872037037037037,
+                "w": 0.28363541666666664,
+                "h": 0.3862777777777778
+              }
+            }
+          ]
+        }
+      },
+      "pageCount": 43,
+      "ocrApplied": true,
+      "ocrError": null,
+      "keyTerms": null
+    },
+    "yslxMIKyAK": {
+      "id": "yslxMIKyAK",
+      "sessionId": "guest_vdg3GDGpUyvN",
+      "filename": "11- Trees-1.pdf",
+      "storedPath": "/uploads/16dd8401efd392a2ec90a68b607079b5",
+      "mimetype": "application/pdf",
+      "isPdf": true,
+      "isImage": false,
+      "uploadedAt": "2026-09-04T17:04:23.258Z",
       "extractedText": "\n\nCS 250: DATA STRUCTURES AND ALGORITHMS \nTREES-1\nSummer Semester\nInstructor:  Dr. Nazia Bibi\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n2\n\nINTRODUCTION\nData structure such as Arrays, Stacks, Linked List and Queues are linear data structure. \nElements are arranged in linear manner i.e. one after another.\nTree is a non-linear data structure.\nTree imposes a Hierarchical structure, on a collection of items.\nSeveral practical applications:\nOrganization charts\nFamily hierarchy \nRepresentation of algebraic expression\n3\n\nOrganizational \nChart\nCHIEF EXECUTIVE OF PAKISTAN\nPresident, Board of Investment\nMINISTER IN CHARGE\nMinister for Commerce, Ind & Prod.\nCHAIRMAN\nBoard of Investment\nSECRETARY\nBoard of Investment\nHEAD OFFICE\nISLAMABAD\nBRANCH OFFICE\nKARACHI\n4\n\nTREES\nA tree is a non-linear abstract data type with a hierarchy-based structure. \nIt consists of nodes (where the data is stored) that are connected via links. \nThe tree data structure stems from a single node called a root node and has \nsubtrees connected to the root.\n6\n\nTREES\nA tree data structure stores information in \nnodes\nSimilar to linked lists:\nThere is a first node, or root\nEach node has variable number of references to \nsuccessors\nEach node, other than the root, has exactly one \nnode pointing to it\n7\n\nTREE TERMINOLOGIES\nRoot\nIt is the mother node of a tree structure and does not have parent. It is the first node \nin hierarchical  arrangement.\nNode\nThe node of a tree stores the data, and its role is the same as in the linked list. Nodes \nare connected by the means of links with other nodes.\nParent\nIt is the immediate  predecessor of a node. \nIn the figure: A is the parent of B and C.\nA\nBC\n8\n\nTREE TERMINOLOGIES\nChild\nAll successor nodes are called child nodes. In the figure: B and C are the child nodes of A.\nLink / Edge\nAn edge connects the two nodes. The line drawn from one node to another node is called \nedge / link. Link is a pointer to node in a tree structure.\nLeaf / Terminal Node\nLeaf node is located at the end of the tree. It does not have any child node. \nA\nBC\n9\n\nTREE TERMINOLOGIES\nFollowing are the important terms with respect to tree.\nPath − Path refers to the sequence of nodes along the edges of a tree.\nRoot − The node at the top of the tree is called root. There is only one root per tree and one path from the \nroot node to any node.\nParent − Any node except the root node has one edge upward to a node called parent.\nChild − The node below a given node connected by its edge downward is called its child node.\nLeaf − The node which does not have any child node is called the leaf node.\nSubtree − Subtree represents the descendants of a node.\nVisiting − Visiting refers to checking the value of a node when control is on the node.\nTraversing − Traversing means passing through nodes in a specific order.\nLevels − Level of a node represents the generation of a node. If the root node is at level 0, then its next child \nnode is at level 1, its grandchild is at level 2, and so on.\nKeys − Key represents a value of a node based on which a search operation is to be carried out for a node.\n10\n\nTREE TERMINOLOGIES\nLevel / Depth\nThe whole tree structured  is leveled. \nThe level of the root node is always at 0\nThe immediate children of root are at level 1 and their children are at level 2 and so no. \nThe length of the path from root to a node is the depth of the node.\nHeight\nThe highest number of nodes that is possible in a way starting from the first node (Root) to a leaf node is called the \nheight of tree. \nThe formula for finding the height of a tree h = i\nmax\n + 1, where h is the height and i\nmax\n is the max level of the tree.\nRoot node\nLeaf nodes\nInterior nodesHeight=3\n11\n0\n1\n2\nLevel / Depth\n\nTREE TERMINOLOGIES\nSibling\nThe child node of same parent are called sibling. \nDegree of a Node\nThe maximum number of children that exists for a node is called as degree of a node.\nPath length\nIs the number of successive edges from source node to destination node.\n12\n\nTREE TERMINOLOGIES\nAncestor and Descendents\nIf a path exists from node a to node b\na is an ancestor of b\nb is a descendent of a\nThe root node is an ancestor of all nodes\nThedescendantsof\nnodeBare;\nC,D,E,F,andG\nThe ancestors of \nnode I are:\nH and A\n13\n\nTREE TERMINOLOGIES\nAnother approach to a tree is to define the tree recursively\nA node with degree n is a tree if it has n children\nAll its children are disjoint trees (i.e., with no intersecting nodes)\nGiven any node a within a tree with root r, the collection of a \nand  all of its descendants is said to be a subtree of the tree with  \nroot a\n14\n\n15\n\nTREE PROPERTIES\nA\nC\nD\nB\nE\nG\nF\nIH\nProperty\nNumber ofnodes\nHeight\nRoot Node\nDepth of G\nLeaves  \nAncestorsofH\nDescendants ofB  \nSiblingsofE\nLeftsubtree\n17\nValue\n9\n5\nA\n3\nC D F H I\nA B E G\nD E F G H I\nD F\n\nTYPES OF  TREES\nThere are three types of trees −\nGeneral Trees\nBinary Trees\nBinary Search Trees\n18\n\n1. GENERAL TREES\nGeneral trees are unordered tree data structures where the root node has minimum \n0 or maximum n subtrees.\nThe General trees have no constraint placed on their hierarchy. The root node thus \nacts like the superset of all the other subtrees.\n19\n\n2. BINARY TREES\nBinary Trees are general trees in which the root node can only hold up to maximum \n2 subtrees: left subtree and right subtree. \nBased on the number of children, binary trees are divided into three types.\n20\n\n2. BINARY TREES\nFull Binary Tree: A full binary tree is a binary tree type where every node has \neither 0 or 2 child nodes.\nComplete Binary Tree: A complete binary tree is a binary tree type where all the \nleaf nodes must be on the same level. However, root and internal nodes in a \ncomplete binary tree can either have 0, 1 or 2 child nodes.\nPerfect Binary Tree: A perfect binary tree is a binary tree type where all the leaf \nnodes are on the same level and every node except leaf nodes have 2 children.\n21\n\n2. BINARY TREES\n22\n\n3. BINARY SEARCH TREES\nBinary Search Trees possess all the properties of Binary Trees including some extra \nproperties of their own, based on some constraints, making them more efficient than \nbinary trees.\nThe data in the Binary Search Trees (BST) is always stored in such a way that the \nvalues in the left subtree are always less than the values in the root node and the \nvalues in the right subtree are always greater than the values in the root node, i.e. left \nsubtree < root node right subtree.\n23\n\n3. BINARY SEARCH TREES\n24\n\n3. BINARY SEARCH TREES\nAdvantages of BST\nBinary Search Trees are more efficient than Binary Trees since time complexity for \nperforming various operations reduces.\nSince the order of keys is based on just the parent node, searching operation \nbecomes simpler.\nThe alignment of BST also favors Range Queries, which are executed to find values \nexisting between two keys. This helps in the Database Management System.\n25\n\n3. BINARY SEARCH TREES\nDisadvantages of BST\nThe main disadvantage of Binary Search Trees is that if all elements in nodes are \neither greater than or lesser than the root node, the tree becomes skewed. Simply \nput, the tree becomes slanted to one side completely.\nThis skewness will make the tree a linked list rather than a BST, since the worst case \ntime complexity for searching operation becomes O(n).\nTo overcome this issue of skewness in the Binary Search Trees, the concept of \nBalanced Binary Search Trees was introduced.\n26\n\nBALANCED BINARY SEARCH TREES\nThe trees are designed in a way that they self-balance once the height difference exceeds one. \nBinary Search Trees use rotations as self-balancing algorithms. There are four different types of rotations: Left Left, \nRight Right, Left Right, Right Left.\nThere are various types of self-balancing binary search trees −\nAVL Trees\nRed Black Trees\nB Trees\nB+ Trees\nSplay Trees\nPriority Search Trees\n27\n\nBINARY TREES\nThe simplest form of tree is a binary tree. \nA binary tree consists of \na node (called the root node) and \n the two sub-trees are referred as\nLeft-hand subtree\nRight-hand subtree\nA tree is binary if each node of it has a maximum of two branches i.e. a \nnode of a binary tree can have maximum two children.\n28\n\nBINARY TREE\n57\n2\n5114\n269\n29\n\nNOTATION\nA\nC\nGHI\nFE\nB\nD\nRoot\nLeft sub-tree\nRight sub-tree\n30\n\nAn edge connects the two nodes.\nA\nC\nGHI\nFE\nB\nD\n31\n\nChildren\nWho are node C’s children?\nWho are node A’s children?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n32\n\nDescendants\nWho are node C’s descendants?\nWho are node A’s descendants?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n33\n\nParents\nWho is node E’s parent?\nWho is node H’s parent?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n34\n\nAncestors\nWho are node D’s ancestors?\nWho are node H’s ancestors?\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n35\n\nPath\nIf n\n1\n, n\n2\n,...n\nk\n is a sequence of nodes\nsuch that n\ni\n is the parent of n\ni\n+1, \nthen that sequence is a path.\nThe length of the path is k-1.\nPath from J to A\nNOTATION\nGI\nE\nB\nD\nA\nC\nH\nF\nJ\n36\n\nDepth\nThe length of the path from \nthe root of the tree to the node\nNOTATION\nA\nC\nGHI\nFE\nB\nD\n1\n2\n37\n\nLevel\nAll nodes of depth d are at \nlevel d in the tree.\nNOTATION\n0\n1\n2\n3\nA\nC\nGHI\nFE\nB\nD\n38\n\nLeaf node\nAny node that has two empty \nchildren.\nNOTATION\nA\nCB\nFED\nGHI\n39\n\nInternal node\nAny node that has at least one non-\nempty child.\nNOTATION\nA\nCB\nFED\nGHI\n40\n\nBINARY TREE: FULL NODE\nA full node is a node where both the left and right sub-trees are non-empty trees\nfullnodesneitherleafnodes\n41\n\nFULL BINARY TREE\nA full binary tree is where each node is:\nA full node, or\nA leaf node\nFull binary tree is also called proper binary tree or strictly binary tree\n42\n\nCOMPLETE (OR PERFECT) BINARY TREE\nA complete binary tree of depth h is a binary tree where:\nAll leaf nodes have the same depth h\nAll other nodes are full\n43\n\nBINARY TREE: PROPERTIES\nA complete binary tree with depth h has:  2\nh  \n= 2\n4 \n=16\n \nleaf nodes\nA complete binary tree of depth h has:  2\nh+1\n  - 1= 2\n4+1\n  - 1=  32 - 1= 31  nodes\nh\n44\n\nBALANCED BINARY TREE\nBalanced binary tree\nFor each node, the difference in \nheight of the right and left sub-\ntrees  is no more than one\nc\na\nb\ndefg  \nhij\nA balanced binarytree\nd\na\nb\nce\nf\ngh\nij\nAn unbalanced binarytree\n45",
       "ocrData": null,
       "pageCount": 43,

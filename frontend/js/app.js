@@ -53,6 +53,21 @@ document.addEventListener("click", (e) => {
     }
 });
 
+// ---------------------------------------------------------------- topbar height
+// The upload and reader panes are sized as 100vh minus the topbar, but the bar
+// wraps onto a second row once the nav buttons stop fitting beside the brand.
+// Publish its measured height so those calc()s never leave a gap or produce a
+// stray page-level scrollbar next to the reader's own one.
+const topbarEl = document.querySelector(".topbar");
+function syncTopbarHeight() {
+    if (!topbarEl) return;
+    const h = Math.round(topbarEl.getBoundingClientRect().height);
+    document.documentElement.style.setProperty("--topbar-h", `${h}px`);
+}
+syncTopbarHeight();
+if (topbarEl && window.ResizeObserver) new ResizeObserver(syncTopbarHeight).observe(topbarEl);
+window.addEventListener("resize", syncTopbarHeight);
+
 // ---------------------------------------------------------------- backend origin
 // The backend is a separate app/origin now (see frontend/js/config.js). Every
 // backend-bound URL — API calls AND asset URLs like uploaded file paths —
@@ -1860,12 +1875,15 @@ function renderFullDashboard(dashData, calData) {
     if (calData.totalAnswered > 0) {
         const pct = (n) => (n === null ? "—" : `${Math.round(n * 100)}%`);
         const confidentWrongRate = calData.confidentWrongRate;
+        // Headline figures use the UI-sans --font-stat rather than --font-display:
+        // the Fraunces serif at 500 reads as decorative at these sizes, so the numbers
+        // competed with the section headings instead of dominating their cards.
         html += `
 <div style="margin-bottom:32px">
 <h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Confidence Calibration</h3>
 ${confidentWrongRate !== null ? `
 <div style="background:var(--paper);border-radius:var(--radius-lg);padding:20px;text-align:center;margin-bottom:16px">
-<div style="font-family:var(--font-display);font-size:42px;font-weight:500;color:var(--wrong)">${pct(confidentWrongRate)}</div>
+<div style="font-family:var(--font-stat);font-size:42px;font-weight:700;color:var(--wrong)">${pct(confidentWrongRate)}</div>
 <div style="font-size:13px;color:var(--ink-soft)">of the time you were <strong>confident</strong>, you were actually wrong</div>
 </div>
 ` : ""}
@@ -1935,11 +1953,11 @@ ${sample ? `<div style="font-size:12px;font-style:italic;color:var(--ink-soft);m
     if (dueNow > 0 || upcoming > 0) {
         html += `<div style="display:flex;gap:12px">
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${dueNow}</div>
+<div style="font-family:var(--font-stat);font-size:28px;font-weight:700">${dueNow}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Due now</div>
 </div>
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${upcoming}</div>
+<div style="font-family:var(--font-stat);font-size:28px;font-weight:700">${upcoming}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Upcoming</div>
 </div>
 </div>`;
@@ -1962,15 +1980,15 @@ ${reviewChips.map((c) => `<span class="quiz-topic-badge" style="margin:0">${c.co
         const rate = improvement?.improvementRate;
         html += `<div style="display:flex;gap:12px">
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${followUpsAttempted}</div>
+<div style="font-family:var(--font-stat);font-size:28px;font-weight:700">${followUpsAttempted}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Follow-ups tried</div>
 </div>
 <div style="flex:1;background:var(--correct-soft);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500;color:var(--correct)">${improved}</div>
+<div style="font-family:var(--font-stat);font-size:28px;font-weight:700;color:var(--correct)">${improved}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Got it right</div>
 </div>
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500;color:var(--wrong)">${struggling}</div>
+<div style="font-family:var(--font-stat);font-size:28px;font-weight:700;color:var(--wrong)">${struggling}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Still struggling</div>
 </div>
 </div>`;
