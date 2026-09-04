@@ -1608,7 +1608,7 @@ async function showHistoricQuizResults(attemptId) {
         };
 
         closeDrawers();
-        openQuizOverlay();
+        openQuizOverlay("Quiz Results");
         renderQuizResults();
     } catch (err) {
         alert(`Error loading quiz results: ${err.message}`);
@@ -1823,7 +1823,7 @@ function renderDebugLog() {
 // ---------------------------------------------------------------- dashboard — learning overview
 $("#btnDashboard").addEventListener("click", async () => {
     try {
-        openQuizOverlay();
+        openQuizOverlay("Learning Overview");
         $("#quizProgressFill").style.width = "0%";
         $("#quizProgressLabel").textContent = "";
         quizOverlayBody.innerHTML = `
@@ -1848,7 +1848,11 @@ $("#btnDashboard").addEventListener("click", async () => {
 function renderFullDashboard(dashData, calData) {
     const weakTopics = dashData?.weakTopics || [];
     const improvement = dashData?.improvement || null;
-    const reviewSummary = dashData?.reviewSummary || { dueNow: 0, upcoming: 0 };
+    const reviewSummary = dashData?.reviewSummary || {};
+    // GET /api/dashboard returns totalDue/totalUpcoming/byType — not dueNow/upcoming.
+    const dueNow = reviewSummary.totalDue ?? 0;
+    const upcoming = reviewSummary.totalUpcoming ?? 0;
+    const reviewByType = reviewSummary.byType || {};
 
     let html = `<div class="quiz-overlay-inner" style="max-width:800px">`;
 
@@ -1885,46 +1889,94 @@ return `
         html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 8px">Confidence Calibration</h3><p style="color:var(--ink-soft);font-size:13px">Take a quiz first — confidence stats fill in after you answer questions.</p></div>`;
     }
 
-    // Weak topics section
+    // Weak topics section — each cluster is { label, count, priority, samples[] },
+    // so the display name is `label`, the miss count is `count`, and the most
+    // recent miss date comes from the samples rather than a `lastSeen` field.
+    const TOPIC_PRIORITY = {
+        high: { text: "High priority", color: "var(--wrong)" },
+        medium: { text: "Medium priority", color: "var(--amber)" },
+        low: { text: "Low priority", color: "var(--ink-soft)" },
+    };
     html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Weak Topics</h3>`;
     if (weakTopics.length) {
-        html += weakTopics.map((t) => `
+        const shownTopics = weakTopics.slice(0, 8);
+        html += shownTopics.map((t) => {
+            const prio = TOPIC_PRIORITY[t.priority] || TOPIC_PRIORITY.medium;
+            const seen = (t.samples || []).map((s) => s.createdAt).filter(Boolean).sort();
+            const lastSeen = seen.length ? new Date(seen[seen.length - 1]).toLocaleDateString() : null;
+            const sample = t.samples?.[0]?.question;
+            return `
 <div style="background:var(--paper);border-radius:var(--radius-md);padding:14px;margin-bottom:8px">
-<div style="font-weight:600;font-size:14px">${escapeHtml(t.topic)}</div>
-<div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${t.missCount} miss${t.missCount !== 1 ? "es" : ""} · last seen ${new Date(t.lastSeen).toLocaleDateString()}</div>
-</div>`).join("");
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+<div style="font-weight:600;font-size:14px">${escapeHtml(t.label || "Untitled topic")}</div>
+<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:${prio.color};flex-shrink:0">${prio.text}</span>
+</div>
+<div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${t.count ?? 0} miss${t.count === 1 ? "" : "es"}${lastSeen ? ` · last seen ${lastSeen}` : ""}</div>
+${sample ? `<div style="font-size:12px;font-style:italic;color:var(--ink-soft);margin-top:6px">“${escapeHtml(sample)}”</div>` : ""}
+</div>`;
+        }).join("");
+        if (weakTopics.length > shownTopics.length) {
+            html += `<p style="color:var(--ink-soft);font-size:12px">+ ${weakTopics.length - shownTopics.length} more topics with fewer misses.</p>`;
+        }
     } else {
         html += `<p style="color:var(--ink-soft);font-size:13px">No weak topics detected yet.</p>`;
     }
     html += `</div>`;
 
     // Review summary
+    const reviewChips = [
+        { count: reviewByType.confidentWrong, label: "confident but wrong" },
+        { count: reviewByType.conceptualErrors, label: "concept gaps" },
+        { count: reviewByType.doubts, label: "saved doubts" },
+        { count: reviewByType.carelessErrors, label: "careless / terminology" },
+    ].filter((c) => c.count > 0);
+
     html += `<div style="margin-bottom:32px"><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Review Queue</h3>`;
-    if (reviewSummary.dueNow > 0 || reviewSummary.upcoming > 0) {
+    if (dueNow > 0 || upcoming > 0) {
         html += `<div style="display:flex;gap:12px">
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${reviewSummary.dueNow}</div>
+<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${dueNow}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Due now</div>
 </div>
 <div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
-<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${reviewSummary.upcoming}</div>
+<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${upcoming}</div>
 <div style="font-size:12px;color:var(--ink-soft)">Upcoming</div>
 </div>
 </div>`;
+        if (reviewChips.length) {
+            html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+${reviewChips.map((c) => `<span class="quiz-topic-badge" style="margin:0">${c.count} ${c.label}</span>`).join("")}
+</div>`;
+        }
     } else {
         html += `<p style="color:var(--ink-soft);font-size:13px">Nothing to review right now.</p>`;
     }
     html += `</div>`;
 
-    // Improvement progress
+    // Improvement progress — /api/dashboard returns aggregate counts, not a topic list.
+    const followUpsAttempted = improvement?.totalFollowUps ?? 0;
     html += `<div><h3 style="font-family:var(--font-display);font-size:22px;margin:0 0 16px">Improvement Progress</h3>`;
-    const impList = Array.isArray(improvement) ? improvement : (improvement?.topics || []);
-    if (impList.length) {
-        html += impList.map((i) => `
-<div style="background:var(--paper);border-radius:var(--radius-md);padding:14px;margin-bottom:8px">
-<div style="font-weight:600;font-size:14px">${escapeHtml(i.topic || i)}</div>
-<div style="font-size:12px;color:var(--correct);margin-top:4px">✓ Improved</div>
-</div>`).join("");
+    if (followUpsAttempted > 0) {
+        const improved = improvement?.improved ?? 0;
+        const struggling = improvement?.stillStruggling ?? 0;
+        const rate = improvement?.improvementRate;
+        html += `<div style="display:flex;gap:12px">
+<div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
+<div style="font-family:var(--font-display);font-size:28px;font-weight:500">${followUpsAttempted}</div>
+<div style="font-size:12px;color:var(--ink-soft)">Follow-ups tried</div>
+</div>
+<div style="flex:1;background:var(--correct-soft);border-radius:var(--radius-md);padding:14px;text-align:center">
+<div style="font-family:var(--font-display);font-size:28px;font-weight:500;color:var(--correct)">${improved}</div>
+<div style="font-size:12px;color:var(--ink-soft)">Got it right</div>
+</div>
+<div style="flex:1;background:var(--paper);border-radius:var(--radius-md);padding:14px;text-align:center">
+<div style="font-family:var(--font-display);font-size:28px;font-weight:500;color:var(--wrong)">${struggling}</div>
+<div style="font-size:12px;color:var(--ink-soft)">Still struggling</div>
+</div>
+</div>`;
+        if (rate !== null && rate !== undefined) {
+            html += `<p style="color:var(--ink-soft);font-size:13px;margin-top:10px">You now get ${Math.round(rate * 100)}% of the follow-up questions you attempt.</p>`;
+        }
     } else {
         html += `<p style="color:var(--ink-soft);font-size:13px">Complete follow-up questions to see improvement tracking.</p>`;
     }
@@ -2059,16 +2111,39 @@ async function startQuiz(count, mode) {
     currentQuestionIndex = 0;
     currentAttempt = null;
 
-    // Show a temporary loading overlay while generating.
-    openQuizOverlay();
-    $("#quizProgressFill").style.width = "0%";
-    $("#quizProgressLabel").textContent = "";
-    quizOverlayBody.innerHTML = `
-<div class="loader-container">
-    <div class="loader-rings"></div>
-    <span>Generating a ${count}-question ${mode === "freeText" ? "free-text" : "MCQ"} quiz…</span>
-</div>
-`;
+    // Corner popup instead of a blocking overlay — the user keeps reading while
+    // the AI generates. "×" hides the ping; the request still runs and re-shows
+    // the card once the quiz is ready.
+    const modeLabel = mode === "freeText" ? "free-text" : "MCQ";
+    const popup = document.createElement("div");
+    popup.className = "quiz-gen-popup";
+    let popupPhase = "loading";
+
+    function paintPopup(html) {
+        const closeLabel = popupPhase === "loading" ? "Hide" : "Dismiss";
+        popup.innerHTML = `
+            <button class="quiz-gen-popup-close" title="${closeLabel}">×</button>
+            ${html}
+        `;
+        popup.querySelector(".quiz-gen-popup-close").addEventListener("click", () => {
+            if (popupPhase === "loading") {
+                popup.classList.add("is-hidden"); // generation continues in background
+            } else {
+                popup.remove();
+            }
+        });
+    }
+
+    paintPopup(`
+        <div class="quiz-gen-popup-inner">
+            <div class="loader-rings"></div>
+            <div>
+                <div class="quiz-gen-popup-title">Generating quiz…</div>
+                <div class="quiz-gen-popup-sub">${count} ${modeLabel} questions · keep reading — we'll ping you here.</div>
+            </div>
+        </div>
+    `);
+    document.body.appendChild(popup);
 
     try {
         const res = await api(`/api/documents/${state.documentId}/quiz`, {
@@ -2079,15 +2154,44 @@ async function startQuiz(count, mode) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         currentQuiz = data;
-        renderQuizQuestion();
+
+        popupPhase = "ready";
+        popup.classList.remove("is-hidden");
+        paintPopup(`
+            <div class="quiz-gen-popup-inner stacked">
+                <div class="quiz-gen-popup-title">Quiz ready!</div>
+                <div class="quiz-gen-popup-sub">${data.questions.length} questions generated</div>
+                <button class="btn btn-primary" id="quizGenStartBtn">Start Quiz</button>
+            </div>
+        `);
+        popup.querySelector("#quizGenStartBtn").addEventListener("click", () => {
+            popup.remove();
+            openQuizOverlay();
+            $("#quizProgressFill").style.width = "0%";
+            $("#quizProgressLabel").textContent = "";
+            renderQuizQuestion();
+        });
     } catch (err) {
         const needsKey = /MANUS_API_KEY/i.test(err.message);
-        const hint = needsKey ? `<br><span style="color:var(--ink-soft)">Add your Manus key to <code>.env</code> and restart the server.</span>` : "";
-        quizOverlayBody.innerHTML = `<div class="empty-note">${escapeHtml(err.message)}${hint}</div>`;
+        const hint = needsKey ? `<div class="quiz-gen-popup-sub">Add your Manus key to <code>.env</code> and restart.</div>` : "";
+        popupPhase = "failed";
+        popup.classList.remove("is-hidden");
+        paintPopup(`
+            <div class="quiz-gen-popup-inner stacked">
+                <div class="quiz-gen-popup-title" style="color:var(--wrong)">Generation failed</div>
+                <div class="quiz-gen-popup-sub">${escapeHtml(err.message)}</div>
+                ${hint}
+                <button class="btn btn-ghost" id="quizGenCloseBtn">Close</button>
+            </div>
+        `);
+        popup.querySelector("#quizGenCloseBtn").addEventListener("click", () => popup.remove());
     }
 }
 
-function openQuizOverlay() {
+/** Opens the full-screen reader-free overlay. `title` labels the header, since
+ *  the same overlay hosts the quiz, the results, and the learning overview. */
+function openQuizOverlay(title = "Quiz") {
+    $("#quizOverlayTitle").textContent = title;
     quizOverlay.classList.remove("hidden");
 }
 function closeQuizOverlay() {
@@ -2275,7 +2379,10 @@ function renderQuizResults() {
         `;
         }).join("")}
     </div>
-    <div class="quiz-overlay-nav" style="justify-content:center">
+    <div class="quiz-overlay-nav" style="justify-content:center;gap:12px">
+        ${attempt.answers.some((a) => a.feedback?.includes("Grading failed") || a.feedback?.includes("timed out")) ? `
+            <button class="btn btn-ghost" id="quizRegradeBtn" style="border-color:var(--amber);color:var(--amber)">🔄 Regrade failed items</button>
+        ` : ""}
         <button class="btn btn-primary" id="quizDoneBtn">Done</button>
     </div>
 </div>
@@ -2284,6 +2391,31 @@ function renderQuizResults() {
     quizOverlayBody.querySelectorAll(".follow-up-trigger").forEach((btn) => {
         btn.addEventListener("click", () => loadFollowUp(attempt.id, Number(btn.dataset.qi), btn));
     });
+
+    // Regrade button — only shown when there are grading errors.
+    const regradeBtn = $("#quizRegradeBtn");
+    if (regradeBtn) {
+        regradeBtn.addEventListener("click", async () => {
+            regradeBtn.disabled = true;
+            regradeBtn.textContent = "Regrading…";
+            try {
+                const res = await api(`/api/quizzes/${currentQuiz.id}/regrade`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ attemptId: attempt.id }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                currentAttempt = data;
+                renderQuizResults(); // re-render with updated grades
+            } catch (err) {
+                regradeBtn.textContent = `✗ ${err.message}`;
+                regradeBtn.style.borderColor = "var(--wrong)";
+                regradeBtn.style.color = "var(--wrong)";
+                setTimeout(() => { regradeBtn.disabled = false; regradeBtn.textContent = "🔄 Regrade failed items"; regradeBtn.style.borderColor = ""; regradeBtn.style.color = ""; }, 3000);
+            }
+        });
+    }
 
     $("#quizDoneBtn").addEventListener("click", () => {
         closeQuizOverlay();
@@ -2324,7 +2456,7 @@ function showGradingCompleteToast(attempt) {
 `;
     gradingToastEl.querySelector("#viewFullResultsBtn").addEventListener("click", () => {
         hideGradingToast();
-        openQuizOverlay();
+        openQuizOverlay("Quiz Results");
         renderQuizResults();
     });
 }

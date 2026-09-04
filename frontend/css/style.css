@@ -798,6 +798,54 @@ original word stays legible underneath it. */
     }
 }
 
+/* ---------------------------------------------------------------- quiz generation popup
+   Corner notification, NOT a modal: no backdrop and no inset:0, so the reader
+   stays fully usable while the AI writes the questions. Same geometry as the
+   grading toast below so the two never fight for the corner. */
+.quiz-gen-popup {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 250; /* above quiz overlay (150) and drawers (70) */
+    width: 300px;
+    max-width: calc(100vw - 24px);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px -12px rgba(0,0,0,.3);
+    animation: popupIn .22s var(--ease);
+}
+.quiz-gen-popup.is-hidden { display: none; }
+.quiz-gen-popup-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+/* Ready / failed states stack their content instead of sitting beside a spinner. */
+.quiz-gen-popup-inner.stacked { flex-direction: column; align-items: stretch; text-align: center; gap: 10px; }
+.quiz-gen-popup .loader-rings { width: 32px; height: 32px; flex-shrink: 0; }
+.quiz-gen-popup .loader-rings::after { top: 6px; left: 6px; right: 6px; bottom: 6px; }
+.quiz-gen-popup-title { font-size: 14px; font-weight: 600; }
+.quiz-gen-popup-sub { font-size: 12px; color: var(--ink-soft); }
+.quiz-gen-popup-close {
+    position: absolute; top: 4px; right: 6px;
+    width: 22px; height: 22px; padding: 0;
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--ink-soft); font-size: 16px; line-height: 1;
+    border-radius: 50%;
+}
+.quiz-gen-popup-close:hover { background: var(--paper); color: var(--ink); }
+@keyframes popupIn {
+    from { opacity: 0; transform: translateY(14px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 640px) {
+    .quiz-gen-popup { left: 12px; right: 12px; bottom: 12px; width: auto; }
+}
+
 /* ---------------------------------------------------------------- grading toast */
 .grading-toast {
     position: fixed;

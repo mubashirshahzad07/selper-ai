@@ -103,6 +103,57 @@ export function quizzesRouter() {
   );
 
   // ---------------------------------------------------------------------------
+  // POST /api/quizzes/:id/regrade — re-run AI grading on failed items only.
+  // Body: { attemptId }
+  // ---------------------------------------------------------------------------
+  router.post(
+    "/:id/regrade",
+    asyncRoute(async (req, res) => {
+      const database = await db.get();
+      const quiz = database.quizzes[req.params.id];
+      assertOwnership(quiz, req, "Quiz");
+
+      const { attemptId } = req.body || {};
+      if (!attemptId) return res.status(400).json({ error: "attemptId is required." });
+
+      const attempt = database.attempts[attemptId];
+      assertOwnership(attempt, req, "Attempt");
+
+      if (attempt.mode !== "freeText") {
+        return res.status(400).json({ error: "Regrading only applies to free-text quizzes." });
+      }
+
+      // Re-grade only answers that had grading errors.
+      for (let i = 0; i < attempt.answers.length; i++) {
+        const ans = attempt.answers[i];
+        if (ans.feedback?.includes("Grading failed") || ans.feedback?.includes("timed out")) {
+          const q = quiz.questions[i];
+          if (!q) continue; // attempt/answer count mismatch — leave this row untouched
+          try {
+            const gradeResult = await gradeFreeTextAnswer(ans.studentAnswer, q);
+            ans.score = gradeResult.score;
+            ans.feedback = gradeResult.feedback;
+            ans.matchedCriteria = gradeResult.matchedCriteria;
+            ans.missedCriteria = gradeResult.missedCriteria;
+            ans.isCorrect = gradeResult.score >= 0.7;
+            ans.errorCategory = ans.isCorrect ? null : (gradeResult.score >= 0.4 ? "Careless" : "Conceptual");
+          } catch (err) {
+            ans.feedback = `Regrade failed: ${err.message}`;
+          }
+        }
+      }
+
+      // Recalculate overall score.
+      attempt.score = attempt.answers.length
+        ? attempt.answers.reduce((sum, a) => sum + a.score, 0) / attempt.answers.length
+        : 0;
+      await db.save();
+
+      res.json(attempt);
+    })
+  );
+
+  // ---------------------------------------------------------------------------
   // GET /api/quizzes/history — list all quiz attempts for the current session,
   // ordered newest-first. Returns lightweight summaries (no full question text)
   // so the history view loads fast even with many past quizzes.

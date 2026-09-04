@@ -15,6 +15,10 @@ const ERROR_LABELS = {
  * Group wrong answers by their TOPIC (from the quiz question's topic field).
  * Each cluster gets a count, priority level, and sample questions.
  * Falls back to errorCategory if topic is missing.
+ *
+ * Clusters are keyed case/punctuation-insensitively, because the AI phrases the
+ * same topic slightly differently across quizzes ("Binary Tree Storage" vs
+ * "binary tree storage") and those misses must stack up in one row.
  */
 function buildWeakTopicClusters(attempts) {
     const clusters = {};
@@ -25,19 +29,28 @@ function buildWeakTopicClusters(attempts) {
                 // Use topic from the question if available; fall back to errorCategory.
                 const topicKey = answer.topic || answer.errorCategory || "Unknown";
                 const label = answer.topic || ERROR_LABELS[answer.errorCategory] || answer.errorCategory || "Unknown";
+                const dedupeKey = topicKey.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-                if (!clusters[topicKey]) {
-                    const isConceptual = answer.errorCategory === "Conceptual" || !answer.errorCategory;
-                    clusters[topicKey] = {
+                if (!clusters[dedupeKey]) {
+                    clusters[dedupeKey] = {
                         label,
                         count: 0,
-                        priority: isConceptual ? "high" : "medium",
+                        priority: "low",
                         samples: [],
                     };
                 }
-                clusters[topicKey].count++;
-                if (clusters[topicKey].samples.length < 3) {
-                    clusters[topicKey].samples.push({
+                const cluster = clusters[dedupeKey];
+                cluster.count++;
+                // Concept gaps (or uncategorised misses) outrank careless slips, so
+                // escalate the cluster as soon as one shows up — not just from the
+                // first answer that created it.
+                if (answer.errorCategory === "Conceptual" || !answer.errorCategory) {
+                    cluster.priority = "high";
+                } else if (cluster.priority !== "high") {
+                    cluster.priority = "medium";
+                }
+                if (cluster.samples.length < 3) {
+                    cluster.samples.push({
                         question: answer.question,
                         documentId: attempt.documentId,
                         createdAt: attempt.createdAt,

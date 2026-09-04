@@ -380,7 +380,8 @@ STUDENT: "${studentAnswer}"`;
     const t0 = Date.now();
 
     try {
-        const { value: parsed } = await geminiCompleteWithRetry({ prompt, schema: GRADE_SCHEMA, timeoutMs: 20000, maxOutputTokens: 512 });
+        // Use Manus for grading instead of Gemini — more reliable for structured output.
+        const { value: parsed } = await manusCompleteWithRetry({ prompt, schema: GRADE_SCHEMA, timeoutMs: 60000 });
         console.log(`[AI] Grade done in ${Date.now() - t0}ms`);
 
         if (!parsed || typeof parsed.score !== "number" || typeof parsed.feedback !== "string") {
