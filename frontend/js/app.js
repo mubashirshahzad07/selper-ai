@@ -1284,9 +1284,19 @@ async function runDefine() {
             ? `<a class="assist-ref" href="${data.wikipedia.url}" target="_blank" rel="noopener">Open Wikipedia reference →</a>`
             : "";
 
+        // The card title must be the word/phrase the student actually selected,
+        // not the Wikipedia article name — "Tree (abstract data type)" as a title
+        // for a lookup on "root" reads like the wrong definition was returned.
+        // The resolved sense and the Wikipedia link below still carry the broader
+        // topic context, which is where that belongs.
+        const senseLine = data.resolvedSense && data.resolvedSense !== text
+            ? `<div class="assist-sense">${escapeHtml(data.resolvedSense)}</div>`
+            : "";
+
         assistBody.innerHTML = `
 <div class="assist-label">Definition</div>
-<h4>${escapeHtml(data.wikipedia?.title || text)}</h4>
+<h4>${escapeHtml(text)}</h4>
+${senseLine}
 ${body}
 ${wikiLink}
 `;

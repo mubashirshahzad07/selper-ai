@@ -740,6 +740,10 @@ original word stays legible underneath it. */
     text-transform: uppercase; color: var(--success); margin-bottom: 6px; font-weight: 600;
 }
 .assist-body h4 { font-family: var(--font-display); font-size: 18px; margin: 0 0 8px; font-weight: 500; }
+/* Resolved-sense line — sits between the selected word (h4) and the
+   definition body, giving the broader topic context without hijacking
+   the title. Muted so it reads as a subtitle, not a competing heading. */
+.assist-sense { font-size: 12px; color: var(--ink-soft); margin: -4px 0 8px; font-style: italic; }
 .assist-body p { font-size: 13.5px; line-height: 1.55; margin: 0 0 10px; color: var(--ink); }
 .assist-urdu {
     direction: rtl; text-align: right;
