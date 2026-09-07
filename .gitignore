@@ -2,3 +2,7 @@
 *.log
 .vscode/
 .idea/
+.env
+.env.*
+!.env.example
+
